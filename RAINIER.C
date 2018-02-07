@@ -910,6 +910,9 @@ const double g_dKX2 = 5.204155555E-08; // mb^-1 MeV^-2;  = 1/(5*(pi*hbar*c)^2)
 double GetTemp(double dEx) {
   double dEff = GetEff(dEx);
   double dLDa = GetLDa(dEx);
+  #ifdef b_GenLor_CT
+  return g_GenLor_CT;
+  #endif
   return sqrt(dEff / dLDa);
 } // GetTemp
 
