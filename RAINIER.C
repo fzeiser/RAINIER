@@ -288,6 +288,7 @@ using namespace std;
 #include "TMath.h"
 #include <TROOT.h>
 #include "TF1.h"
+#include "TF2.h"
 // determine OS for briccs
 #ifdef __linux__
 char cbriccs[] = "briccs";
@@ -501,8 +502,8 @@ void ReadPopFile() {
   for(int binE=1; binE<g_nExPopI; binE++) {
     for(int binJ=1; binJ<=g_nSpPopIBin; binJ++) {
       // levels above Ecrit need to be multiplied by 2:
-      // this is a hidden "feature" of TALYS
-      g_h2PopDist->SetBinContent(binJ,binE, 2 * adPop[binE-1][binJ-1]);
+      // this is a hidden "feature" of TALYS -- per parity effect?
+      g_h2PopDist->SetBinContent(binJ,binE, 2 * adPop[binE-1][binJ-1]); 
     } // assign J
   } // assign E
 
@@ -1639,6 +1640,8 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
           bool bDisBinFound = false;
           for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
             double dLvlE = g_adDisEne[lvl];
+            // cout << "dLvlE: " << dLvlE << endl;
+            // cout << "dLowEBdy: " << dLowEBdy << endl;
             if(TMath::Abs(dLowEBdy - dLvlE) < 0.001) {
               nDisEx = lvl;
               bDisBinFound = true;
@@ -1696,13 +1699,15 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
 
 TF1 *fnLDa, *fnSpCut, *fnGSFE1, *fnGSFM1, *fnGSFE2, *fnGSFTot;
 TH1D *g_hJIntrins;
+TH1F *g_h2JIntrins;     // 2D histogram of underlying density
+TF2 *fJIntrins;         // function to retreive underlying density
 void InitFn() {
   fnLDa    = new TF1("fnLDa",    "GetLDa(x)",0,10);
   fnSpCut  = new TF1("fnSpCut",  "sqrt(GetSpinCut2(x))",0,10);
-  fnGSFE1  = new TF1("fnGSFE1",  "GetStrE1([0],x)/x**3",0,18);
-  fnGSFM1  = new TF1("fnGSFM1",  "GetStrM1(x)/x**3",0,18);
-  fnGSFE2  = new TF1("fnGSFE2",  "GetStrE2(x)/x**5",0,18);
-  fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,18);
+  fnGSFE1  = new TF1("fnGSFE1",  "GetStrE1([0],x)/x**3",0,20);
+  fnGSFM1  = new TF1("fnGSFM1",  "GetStrM1(x)/x**3",0,20);
+  fnGSFE2  = new TF1("fnGSFE2",  "GetStrE2(x)/x**5",0,20);
+  fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,20);
 
   double dEx = 0.5 * g_dExIMax; // spincut is slowly varying fn of E
   g_hJIntrins = new TH1D("hJIntrins","Underlying J Dist", 
@@ -1716,6 +1721,10 @@ void InitFn() {
     g_hJIntrins->Fill(dSp,dSpDen);
   } // spb
 
+  fJIntrins = new TF2("fJIntrins","GetDensity(x,y,1)",0,g_nSpPopIBin-1,0,g_dExIMax);
+  g_h2JIntrins = (TH1F*) fJIntrins->CreateHistogram()->Clone();
+  g_h2JIntrins->SetName("h2JIntrins");
+  g_h2JIntrins->SetTitle("Underlying J Dist (2D)");
 } // InitFn
 
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
@@ -2146,6 +2155,7 @@ void RAINIER(int g_nRunNum = 1) {
     } // Excitation mean
   } // realization
   InitFn();
+
 
   cout << "Writing Histograms" << endl;
   fSaveFile->Write(); // only saves histograms, not the parameters, nor TF1s
