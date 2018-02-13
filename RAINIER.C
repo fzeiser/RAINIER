@@ -254,6 +254,7 @@ const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
 const double g_dPlotSpMax = 10.0;
+const int nExJBin = 100;  // n Ex Bins for plotting underlying J
 ///// JPop Analysis /////
 //const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
 const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
@@ -1702,8 +1703,9 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
 
 TF1 *fnLDa, *fnSpCut, *fnGSFE1, *fnGSFM1, *fnGSFE2, *fnGSFTot;
 TH1D *g_hJIntrins;
-TH1F *g_h2JIntrins;     // 2D histogram of underlying density
+TH2D *g_h2JIntrins;       // 2D histogram of underlying density
 TF2 *fJIntrins;         // function to retreive underlying density
+
 void InitFn() {
   fnLDa    = new TF1("fnLDa",    "GetLDa(x)",0,10);
   fnSpCut  = new TF1("fnSpCut",  "sqrt(GetSpinCut2(x))",0,10);
@@ -1724,10 +1726,37 @@ void InitFn() {
     g_hJIntrins->Fill(dSp,dSpDen);
   } // spb
 
-  fJIntrins = new TF2("fJIntrins","GetDensity(x,y,1)",0,g_nSpPopIBin-1,0,g_dExIMax);
-  g_h2JIntrins = (TH1F*) fJIntrins->CreateHistogram()->Clone();
-  g_h2JIntrins->SetName("h2JIntrins");
-  g_h2JIntrins->SetTitle("Underlying J Dist (2D)");
+
+  // Histogram over the Underlying J Dist in the continuum
+  double dspStart; // startSpin to plot
+  if(g_bIsEvenA){ dspStart=0; } else { dspStart+=0.5; }
+  g_h2JIntrins = new TH2D("h2JIntrins","Underlying J Dist for E>E_crit",
+                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6), 
+                          g_nConEBin, g_dECrit, g_dExIMax);
+
+  double adJInt[int(g_dPlotSpMax+0.6)]; // densities for the underlying J
+  double adJIntNorm;                    // Normalization
+  double dSp; // integer or half integer determination for density
+  for(int ex=0; ex<g_nConEBin; ex++) {
+    adJIntNorm = 0;
+    // Get density adJInt for each spin
+    for(int spb=0; spb<g_dPlotSpMax; spb++) {     
+        if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
+        adJInt[spb] = GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
+        adJIntNorm += adJInt[spb];
+    }
+    // Normalize for each Ex bin
+    for(int spb=0; spb<g_dPlotSpMax; spb++) {     
+        if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
+        adJInt[spb] /= adJIntNorm;
+        g_h2JIntrins->Fill(dSp,g_adConExCen[ex],adJInt[spb]);
+    }
+  }
+  // The distribution has no statistical errors, so need to set to 0
+  for(int nbin=0; nbin<g_h2JIntrins->GetSize()+1; nbin++){
+    g_h2JIntrins->SetBinError(nbin,0);
+  }
+
 } // InitFn
 
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
