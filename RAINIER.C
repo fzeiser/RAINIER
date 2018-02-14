@@ -1731,22 +1731,22 @@ void InitFn() {
   double dspStart; // startSpin to plot
   if(g_bIsEvenA){ dspStart=0; } else { dspStart+=0.5; }
   g_h2JIntrins = new TH2D("h2JIntrins","Underlying J Dist for E>E_crit",
-                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6), 
+                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6+1), 
                           g_nConEBin, g_dECrit, g_dExIMax);
 
-  double adJInt[int(g_dPlotSpMax+0.6)]; // densities for the underlying J
+  double adJInt[int(g_dPlotSpMax+0.6+1)]; // densities for the underlying J
   double adJIntNorm;                    // Normalization
   double dSp; // integer or half integer determination for density
   for(int ex=0; ex<g_nConEBin; ex++) {
     adJIntNorm = 0;
     // Get density adJInt for each spin
-    for(int spb=0; spb<g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] = GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
         adJIntNorm += adJInt[spb];
     }
     // Normalize for each Ex bin
-    for(int spb=0; spb<g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] /= adJIntNorm;
         g_h2JIntrins->Fill(dSp,g_adConExCen[ex],adJInt[spb]);
