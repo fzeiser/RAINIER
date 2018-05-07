@@ -1,6 +1,6 @@
-/********************* RAINIER l.kirsch  4/27/2017 start date *****************/
-/********************* version 1.1.4:    9/15/2017 Analyze Oslo + Feed Time ***/
-/********************* lekirsch@lbl.gov  **************************************/
+/********************* RAINIER l.kirsch 04/27/2017 start date *****************/
+/********************* version 1.2.0:   02/14/2018 add table+usr def models****/
+/********************* lekirsch@lbl.gov ***************************************/
 //  ____________________________________________ 
 // |* * * * * * * *|############################|
 // | * * * * * * * |                            |
@@ -42,8 +42,6 @@ const int g_nDisLvlMax = 16; // only trust level scheme to here, sets ECrit
 
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
-const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
-
 #define bForceBinNum // else force bin spacing
 #ifdef bForceBinNum
 double g_dConESpac; // constructed E bin spacing
@@ -55,40 +53,71 @@ int g_nConEBin;
 
 ///// Level Density, LD, model /////
 // choose one, fill in corresponding parameters
-//#define bLD_CTM
-#ifdef bLD_CTM
-const double g_dTemp =  0.48473; // MeV
-const double g_dE0   = -1.31817; // MeV
-const double g_dDeuPair = 0.62834; // MeV; 
-//const double g_dE0   = -1.004 + 0.5 * g_dDeuPair; // MeV; von egidy09 fit
-#endif
 
-#define bLD_BSFG
-#ifdef bLD_BSFG
-const double g_dE1 = 0.968; // MeV, excitation energy shift
-const double g_dDeuPair = 2.698; // MeV; can get from ROBIN: Pa_prime
-//const double g_dE1 = g_dDeuPair * 0.5 - 0.381; // von Egidy fit
-#endif
-// deuteron pairing energy from mass table, related to backshift in BSFG or CTM
-// used for effective energy in LD, spincut, GSF models
+///// Level Density, LD, model /////
+// choose one, fill in corresponding parameters
+#define bLD_BSFG // Back Shifted Fermi Gas model
+//#define bLD_CTM // Constant Temperature Model
+//#define bLD_Table // external file with table of values
+//#define bLD_UsrDef // user defined
 
-// Level Density Parameter "a" = pi^2 / (6 * (n + p orbital spacing) )
-//#define bLDaEx // a(Ex) = aAsym * (1 + dW * (1 - exp(-Gam * Eff) / dEff) )
-#ifdef bLDaEx
-const double g_dLDaAsym   = 14.58; // MeV^-1; Asymptotic value, a(Ex->Inf)
-const double g_dDampGam   = 0.0; // Damping Parameter
-const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
-#else // const a
-const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a" 
-#endif
+#ifdef bLD_Table
+#include "LDTable_GC.dat" // made for Gilbert and Cameron 56Fe, not 144Nd
+// you'll have to write code to generate this or you can do it manually. I recompiled TALYS and wrote a parser to do this neatly.
+const double g_dDelta = 3.20713; // effective energy due to pair breaking
+#else
 
-///// Spin Cutoff /////
-// choose one:
-//#define bJCut_VonEgidy05 // low-energy model
-//#define bJCut_SingPart // single particle model
-#define bJCut_RigidSph // rigid sphere model
-//#define bJCut_VonEgidy09 // empirical fit 
-//#define bJCut_Other // so many models of spin cut... code your own
+  #ifdef bLD_CTM
+  const double g_dTemp =  0.48473; // MeV
+  const double g_dE0   = -1.31817; // MeV
+  //const double g_dE0   = -1.004 + 0.5 * g_dDeuPair; // MeV; von egidy09 fit
+  #endif
+  
+  #ifdef bLD_UsrDef
+  const double g_dTemp =  0.48473; // MeV
+  const double g_dE0   = -1.31817; // MeV
+  #endif
+  
+  #ifdef bLD_BSFG
+  const double g_dE1 = 0.968; // MeV, excitation energy shift
+  //const double g_dDeuPair = 2.698; // MeV; can get from ROBIN: Pa_prime
+  //const double g_dE1 = g_dDeuPair * 0.5 - 0.381; // von Egidy fit
+  #endif
+  //deuteron pairing energy from mass table, related to backshift in BSFG or CTM
+  // used for effective energy in LD, spincut, GSF models
+  
+  /////Level Density Parameter "a" = pi^2 / (6 * (n + p orbital spacing) ) /////
+  #define bLDaConst // constant value of "a"
+  //#define bLDaEx // a(Ex) = aAsym * (1 + dW * (1 - exp(-Gam * Eff) / dEff) )
+  
+  #ifdef bLDaConst
+  const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a" 
+  #endif
+  #ifdef bLDaEx
+  const double g_dLDaAsym   = 14.58; // MeV^-1; Asymptotic value, a(Ex->Inf)
+  const double g_dDampGam   = 0.0; // Damping Parameter
+  const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
+  #endif
+  
+  ///// Spin Cutoff /////
+  // choose one:
+  //#define bJCut_VonEgidy05 // low-energy model
+  //#define bJCut_SingPart // single particle model
+  #define bJCut_RigidSph // rigid sphere model
+  //#define bJCut_VonEgidy09 // empirical fit 
+  //#define bJCut_TALYS // TALYS rigid sphere and discrete interpolation
+  //#define bJCut_UsrDef // user defined
+  
+  #ifdef bJCut_VonEgidy09
+  const double g_dDeuPair = 0.62834; // MeV;
+  #endif
+  #ifdef bJCut_TALYS
+  const double g_dSn = 11.19711; //MeV  neutron separation energy
+  const double g_dEd = 3.3532385; //MeV  (E_U + E_L)/2, upper and lower discrete
+  const double g_dSpinCutd = 2.39890; //hbar  discrete Jcut; TALYS 1.8 Eq. 4.255
+  #endif
+
+#endif // bLD_Table
 
 ///// Pairity Dependence /////
 // choose one:
@@ -97,7 +126,7 @@ const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a"
 #ifdef bPar_Edep // 0.5 (1 +/- 1 / (1 + exp( g_dParC * (dEx - g_dParD) ) ) )
 const double g_dParC = 3.0; // MeV^-1
 const double g_dParD = 0.0; // MeV
-#endif
+#endif //the interested coder can put a parity dependece on the bLD_Table option
 
 ///// Level spacing distribution /////
 #define bPoisson // good approx to lvl spacing, might have more severe fluct
@@ -111,34 +140,52 @@ const double g_dParD = 0.0; // MeV
 //#define bWFD_Off // no fluctuations - nearly TALYS with level spac fluct
 #ifdef bWFD_nu
 const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
+// generally not accepted to use
 #endif
 
-// Parameters for 56Fe from TALYS defaults usually an acceptable start
-///// fE1 /////
-// choose one:
-#define bE1_GenLor // General Lorentzian
-//#define bE1_EGLO // Enhanced Generalized Lorentzian for A>148
-//#define bE1_KMF // Kadmenskij Markushev Furman model
-//#define bE1_KopChr // Kopecky Chrien model
-//#define bE1_StdLor // standard Lorentzian
-const double g_adSigE1[] = {317.00, 0.00}; // mb magnitude
-const double g_adEneE1[] = { 15.05, 0.01}; // MeV centroid energy, non-zero
-const double g_adGamE1[] = {  5.30, 0.00}; // MeV GDR width
-//                                  ^^^^ for a 2nd resonance
+//#define bGSF_Table
+#ifdef bGSF_Table
+#include "GSFTable.dat" // just placeholder values in this file for now
+#else
+  // Parameters from TALYS defaults usually an acceptable start
+  ///// fE1 /////
+  // choose one:
+  #define bE1_GenLor // General Lorentzian
+  //#define bE1_EGLO //Enhanced Generalized Lorentzian for A>148; 
+  //  -> allow "#define bE1_GenLor" when using #define bE1_EGLO
+  //#define bE1_KMF // Kadmenskij Markushev Furman model
+  //#define bE1_KopChr // Kopecky Chrien model
+  //#define bE1_StdLor // standard Lorentzian
+  //#define bE1_UsrDef // user defined
+  const double g_adSigE1[] = {317.00, 0.00}; // mb magnitude
+  const double g_adEneE1[] = { 15.05, 0.01}; // MeV centroid energy, non-zero
+  const double g_adGamE1[] = {  5.30, 0.00}; // MeV GDR width
+  //                                  ^^^^ for a 2nd resonance
+  
+  ///// fM1 /////
+  #define bM1_StdLor // standard Lorentzian, parameterized by Prestwich
+  //#define bM1_UsrDef // user defined
+  //#define bM1StrUpbend // Oslo observed low energy upbend aka enhancement
+  const double g_adSigM1[] = { 0.370, 0.00}; // mb magnitude
+  const double g_adEneM1[] = { 7.820, 0.01}; // MeV centroid energy, non-zero
+  const double g_adGamM1[] = { 4.000, 0.00}; // MeV GDR width
+  #ifdef bM1StrUpbend // soft pole behavior: C * exp(-A * Eg)
+  const double g_dUpbendM1Const = 5e-8; // C
+  const double g_dUpbendM1Exp = 1.0; // (positive) A
+  #endif
+  //#define bM1_SingPart // single particle
+  #ifdef bM1_SingPart
+  const double g_dSpSigM1 = 4e-11; // MeV^-3
+  #endif
 
-///// fM1 /////
-//#define bM1StrUpbend // Oslo observed low energy upbend aka enhancement
-#ifdef bM1StrUpbend // soft pole behavior: C * exp(-A * Eg)
-const double g_dUpbendM1Const = 5e-8; // C
-const double g_dUpbendM1Exp = 1.0; // (positive) A
-#endif
-
-///// fE2 /////
-//#define bE2_SingPart // single particle
-#define bE2_StdLor // standard Lorentzian, parameterized by Prestwich
-#ifdef bE2_SingPart
-const double g_dSpSigE2 = 4e-11; // MeV^-5
-#endif
+  ///// fE2 /////
+  #define bE2_StdLor // standard Lorentzian, parameterized by Prestwich
+  //#define bE2_UsrDef // user defined
+  //#define bE2_SingPart // single particle
+  #ifdef bE2_SingPart
+  const double g_dSpSigE2 = 4e-11; // MeV^-5
+  #endif
+#endif // bGSF_Table
 
 ////////////////////// Internal Conversion Coefficient, ICC, Settings //////////
 //#define bUseICC // ICC = 0.0 otherwise
@@ -150,15 +197,15 @@ const double g_dICCMax = 1.0; // MeV; Uses last Ebin ICC value for higher E
 
 ////////////////////// Run Settings ////////////////////////////////////////////
 const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e4; // number of events per excitation and realization
+const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Excitation Settings /////////////////////////////////////
 // choose one, fill in corresponding params:
-//#define bExSingle  // single population input
+#define bExSingle  // single population input
 //#define bExSelect // like Beta decay
 //#define bExSpread  // ejectile detected input
-#define bExFullRxn // no ejectile detected input
+//#define bExFullRxn // no ejectile detected input
 
 #ifdef bExSingle // similar to (n,g)
 const double g_dExIMax = 7.8174; // MeV, Ei - "capture state energy"
@@ -180,18 +227,28 @@ const double g_adBRI[]   = {0, 0, 0, 0, 0.014, 0.58, 0.0094, 0.061, 0.0103,
 #endif
 
 #ifdef bExSpread // similar to (p,p'), (a,a'), (he3,a'), etc.
+//populates J according to intrinsic distribution, u can hardcode something else
 const double g_dExIMax = 8.0; // MeV; constructed lvl scheme built up to this
 // dont exceed with init excitations - gaus might sample higher than expected
 const double g_adExIMean[] = {3.0, 4.0, 5.0, 6.0, 7.0}; // MeV
-const double g_dSpIMean = 4.0; // poisson mean for initial spin state spread
 const double g_dExISpread = 0.2 / 2.355; // MeV; std dev sigma = FWHM / 2.355 
 const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
+#define bJIUnderlying // initial population = intrinsic J dist of the nucleus
+//#define bJIPoisson
+//#define bJIGaus
+#ifdef bJIPoisson
+const double g_dJIMean = 3.5;
+#endif
+#ifdef bJIGaus
+const double g_dJIMean = 3.5;
+const double g_dJIWid = 0.5;
+#endif
 #endif
 
 #ifdef bExFullRxn // from a TALYS output file if available
 const double g_dExIMax = 16.0; // MeV; above max population energy
 const char popFile[] = "Nd144Pop.dat"; // made from TALYS "outpopulation y"
-// make sure to match # of discrete bins
+// make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
 #endif
 
@@ -263,20 +320,10 @@ char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
 // Prestwich Physics A Atoms and Nuclei 315, 103-111 (1984)
 const double g_dEneE2 = 63.0 * pow(g_nAMass,-1/3.0);
 const double g_dGamE2 = 6.11 - 0.012 * g_nAMass;
-const double g_dSigE2 = 1.5e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
+const double g_dSigE2 = 1.4e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
 #endif
 
 const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
-const double g_adEneM1[] = {41.0 * pow(g_nAMass,-1/3.0), 0.01}; // MeV cent E
-const double g_adGamM1[] = {4.00                       , 0.00}; // MeV GDR width
-const double g_adSigM1[] = {
-  // yes it is this complicated and phenomenological: fM1 = 1.58e-9 A^0.47
-  1.58e-9 * pow(g_nAMass, 0.47) / (g_dKX1 * 7.0 * pow(g_adGamM1[0],2)) 
-  * ( pow( pow(7.0,2) - pow(g_adEneM1[0],2),2) + pow(7.0 * g_adGamM1[0],2) )
-                                                       , 0.00}; // mb magnitude
-//                                                       ^^^^ for a 2nd res.
-// I might put in the RIPL ratio formula as well: 
-// just enter your own value for SigM1 if you have something else
 
 #ifdef bExSelect
 const int g_nStateI  = sizeof(g_adExI)     / sizeof(double);
@@ -295,13 +342,16 @@ const double g_adExIMean[] = {0.0}; // unsed in full rxn
 const double g_dExISpread = 0.0; // unsed in full rxn
 #endif
 const int g_nExIMean = sizeof(g_adExIMean) / sizeof(double); // self adjusting
+#ifndef bGSF_Table
 const int g_nParE1   = sizeof(g_adSigE1)   / sizeof(double);
 const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
+#endif
 const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
 const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
 const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
+const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
 
 ///////////////////////// Discrete Input File //////////////////////////////////
 double g_adDisEne[g_nDisLvlMax]; // discrete lvl energy
@@ -409,8 +459,8 @@ void PrintDisLvl() {
 TH2D *g_h2PopDist;
 #ifdef bExFullRxn
 /////////////////////// TALYS Rxn Population File //////////////////////////////
-const int g_nExPopI = 71; // bins 0-70
-const int g_nSpPopIBin = 10; // spins 0-9, havent tested with half-int yet
+const int g_nExPopI = 71; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
+const int g_nSpPopIBin = 10; // spins 0-9
 void ReadPopFile() {
   cout << "Reading Population File" << endl;
   // copy the "Population of Z= 60 N= 84 (144Nd) before decay" section 
@@ -420,6 +470,8 @@ void ReadPopFile() {
   //   mass 144
   //   energy 10
   //   outpopulation y
+  //   bins 54
+  //   maxlevelstar 16
 
   double adEx [g_nExPopI];
   double adPop[g_nExPopI][g_nSpPopIBin];
@@ -448,7 +500,9 @@ void ReadPopFile() {
 
   for(int binE=1; binE<g_nExPopI; binE++) {
     for(int binJ=1; binJ<=g_nSpPopIBin; binJ++) {
-      g_h2PopDist->SetBinContent(binJ,binE,adPop[binE-1][binJ-1]);
+      // levels above Ecrit need to be multiplied by 2:
+      // this is a hidden "feature" of TALYS
+      g_h2PopDist->SetBinContent(binJ,binE, 2 * adPop[binE-1][binJ-1]);
     } // assign J
   } // assign E
 
@@ -463,22 +517,34 @@ double GetEff(double dEx) {
   #ifdef bLD_CTM
   double dEff = dEx - g_dE0;
   #endif
+  #ifdef bLD_UsrDef
+  double dEff = dEx - g_dE0;
+  #endif
+  #ifdef bLD_Table
+  double dEff = dEx - g_dDelta;
+  #endif  
   if(dEff < 0.0) dEff = 0.00000001;
   return dEff;
 } // GetEff
 
 double GetLDa(double dEx) { // TALYS 1.8 asymptotic dependence
   double dEff = GetEff(dEx);
+  #ifdef bLDaConst
+  return g_dLDa;
+  #endif
   #ifdef bLDaEx
   return g_dLDaAsym * (1 + g_dShellDelW * (1 - exp(-g_dDampGam * dEff)) / dEff);
-  #else
-  return g_dLDa;
+  #endif
+  #ifdef bLD_Table
+  return grLDa->Eval(dEx);
   #endif
 } // GetLDa
 
 double GetSpinCut2(double dEx) {
+  #ifndef bLD_Table
   double dEff = GetEff(dEx);
   double dLDa = GetLDa(dEx);
+  #endif
 
   #ifdef bJCut_VonEgidy05 // Von Egidy PRC72,044311(2005)
   double dSpinCut2 = 0.0146 * pow(g_nAMass, 5.0/3.0)
@@ -495,35 +561,66 @@ double GetSpinCut2(double dEx) {
 
   #ifdef bJCut_VonEgidy09 // Von Egidy PRC80,054310(2009)
   // empirical fit to other data with only mass table parameters
-  double dSpinCut2 = 0.391 * pow(g_nAMass, 0.675) * pow(dEx - 0.5 * g_dDeuPair,0.312);
+  double dExPd = dEx - 0.5 * g_dDeuPair;
+  if(dExPd < 0) dExPd = 0.000001;
+  double dSpinCut2 = 0.391 * pow(g_nAMass, 0.675)
+    * pow(dExPd,0.312);
   #endif
 
-  #ifdef bJCut_Other // choose/add what you like, these are some I've found:
+  #ifdef bJCut_TALYS // TALYS 1.8 default:
+  double dSpinCutF2 = 0.01389 * pow(g_nAMass, 5.0/3.0) / g_dLDaAsym
+    * sqrt(dLDa * dEff);
+
+  double dEffSn = GetEff(g_dSn);
+  double dLDaSn = GetLDa(g_dSn);
+  double dSpinCutSn2 = 0.01389 * pow(g_nAMass, 5.0/3.0) / g_dLDaAsym
+    * sqrt(dLDaSn * dEffSn);
+
+  double dSpinCutd2 = pow(g_dSpinCutd,2);
+  double dSpinCut2 = 0.0;
+  if(dEx <= g_dEd) {
+    dSpinCut2 = dSpinCutd2;
+  } else if(dEx < g_dSn) {
+    dSpinCut2 = dSpinCutd2 + (dEx - g_dEd) / (g_dSn - g_dEd)
+      * (dSpinCutSn2 - dSpinCutd2);
+  } else {
+    dSpinCut2 = dSpinCutF2;
+  } // dEx condition
+  #endif
+
+  #ifdef bLD_Table
+  double dJCut = grJCut->Eval(dEx);
+  double dSpinCut2 = pow(dJCut,2);
+  #endif
+
+  #ifdef bJCut_UsrDef // choose/add what you like, these are some I've found:
   // everyone and their mother seems to have a favorite spin cutoff model
-
   //double dSpinCut2 = pow(0.83 * pow(g_nAMass,0.26),2); // TALYS 1.8 global
-
-  //double dSpinCut2 = pow(0.98 * pow(g_nAMass,0.29),2); // DICEBOX CTM
-
-  double dSpinCut2 = 0.01389 * pow(g_nAMass, 5.0/3.0) / g_dLDaAsym
-    * sqrt(GetLDa(dEx) * dEff); // TALYS 1.8 default
-
+  double dSpinCut2 = pow(0.98 * pow(g_nAMass,0.29),2); // DICEBOX CTM
   //double dSpinCut2 = 0.0888*sqrt(dLDa * dEff) * pow(g_nAMass,2/3.0); //DICEBOX
   #endif
+
   return dSpinCut2;
 }
 
 double GetDensityTot(double dEx) {
-  double dEff = GetEff(dEx);
-
   #ifdef bLD_CTM // Constant Temperture Function Model
+  double dEff = GetEff(dEx);
+  double dEnDen = exp(dEff / g_dTemp) / g_dTemp;
+  #endif
+  #ifdef bLD_UsrDef
+  double dEff = GetEff(dEx);
   double dEnDen = exp(dEff / g_dTemp) / g_dTemp;
   #endif
   #ifdef bLD_BSFG // Back shifted Fermi Gas
+  double dEff = GetEff(dEx);
   double dLDa = GetLDa(dEx);
   double dSpinCut2 = GetSpinCut2(dEx);
   double dEnDen = 1.0 / (12.0 * sqrt(2) * sqrt(dSpinCut2) * pow(dLDa, 0.25)
     * pow(dEff, 5.0 / 4.0) ) * exp(2.0 * sqrt(dLDa * dEff) );
+  #endif
+  #ifdef bLD_Table // From external file
+  double dEnDen = grRho->Eval(dEx);
   #endif
   return dEnDen;
 }
@@ -560,7 +657,7 @@ double GetDensity(double dEx, double dSp, int nPar) {
 
   double dDenEJP = dEnDen * dSpDen * dParDen;
   return dDenEJP;
-} // plot with: TF2 *fDen2 = new TF2("fDen2","GetDensity(x,y,1)",0,16,0,9); fDen2->Draw("colz")
+} // plot with: TF2 *fDen2 = new TF2("fDen2","GetDensity(y,x,1)",0,9,0,16); fDen2->Draw("colz")
 
 //////////////////// Build Nucleus /////////////////////////////////////////////
 // spins marked with postscript "b" refer to "bin": necessary for half-int spins
@@ -817,6 +914,10 @@ double GetTemp(double dEx) {
 
 double GetStrE1(double dEx, double dEg) { 
   double dStr = 0.0;
+
+  #ifdef bGSF_Table
+  dStr = grGSF_E1->Eval(dEg);
+  #else
   double dTemp = GetTemp(dEx - dEg);
 
   for(int set=0; set<g_nParE1; set++) { // sum over split dipoles in applicable
@@ -857,8 +958,16 @@ double GetStrE1(double dEx, double dEg) {
       + pow(dEg*g_adGamE1[set], 2) );
     #endif    
 
+    #ifdef bE1_UsrDef // user defined; includes multiple resonances
+    // edit as you please
+    double dTerm = dEg * g_adGamE1[set]
+      / ( pow(dEg*dEg - g_adEneE1[set]*g_adEneE1[set], 2)
+      + pow(dEg*g_adGamE1[set], 2) );
+    #endif
+
     dStr +=  g_dKX1 * g_adSigE1[set] * g_adGamE1[set] * dTerm;
   } // E1 parameter set
+  #endif // bGSF_Table
 
   if(dStr < 0) {cerr << "err: Negative strength" << endl;}
   return dStr * pow(dEg,3); // Eg^(2L+1) so this in not formally gamma strength
@@ -867,16 +976,35 @@ double GetStrE1(double dEx, double dEg) {
 double GetStrM1(double dEg) {
   // Standard Lorentzian
   double dStr = 0.0;
+  #ifdef bGSF_Table
+  dStr = grGSF_M1->Eval(dEg);
+  #else
   for(int set=0; set<g_nParM1; set++) {
+    #ifdef bM1_StdLor
     dStr += g_dKX1 * g_adSigM1[set] * dEg * g_adGamM1[set]*g_adGamM1[set]
       / ( pow(dEg*dEg - g_adEneM1[set]*g_adEneM1[set], 2) 
       + pow(dEg*g_adGamM1[set], 2) );
+    #endif
+
+    #ifdef bM1_UsrDef // user defined; includes multiple resonances
+    // edit as you please
+    dStr += g_dKX1 * g_adSigM1[set] * dEg * g_adGamM1[set]*g_adGamM1[set]
+      / ( pow(dEg*dEg - g_adEneM1[set]*g_adEneM1[set], 2)
+      + pow(dEg*g_adGamM1[set], 2) );
+    #endif
+
   } // M1 parameter set
     
   #ifdef bM1StrUpbend
   double dUpbend = g_dUpbendM1Const * exp(-g_dUpbendM1Exp * dEg);
   dStr += dUpbend;
   #endif
+
+  #ifdef bM1_SingPart
+  dStr = g_dSpSigM1;
+  #endif
+
+  #endif // bGSF_Table
   if(dStr < 0) {cerr << "err: Negative strength" << endl;}
   return dStr * pow(dEg,3);
 }
@@ -889,8 +1017,18 @@ double GetStrE2(double dEg) {
   // divide by Eg so units work out: TALYS formula units don't work
   #endif
 
+  #ifdef bE2_UsrDef // user defined
+  // edit as you please
+  double dStr = g_dKX2 * g_dSigE2 * g_dGamE2*g_dGamE2 
+    / (dEg * (pow(dEg*dEg - g_dEneE2*g_dEneE2,2) + pow(dEg*g_dGamE2,2)));
+  #endif
+
   #ifdef bE2_SingPart
   double dStr = g_dSpSigE2;
+  #endif
+
+  #ifdef bGSF_Table
+  double dStr = grGSF_E2->Eval(dEg);
   #endif
   if(dStr < 0) {cerr << "err: Negative strength" << endl;}
   return dStr * pow(dEg,5);
@@ -1036,6 +1174,7 @@ double GetStr(double dEx, double dEg, int nTransType, double &dMixDelta2,
 } // GetStr
 
 ////////////////////// Internal Conversion /////////////////////////////////////
+#ifdef bUseICC
 double GetBrICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
   int nSuccess = -7;
   int nReadLine = 0;  // BrIcc output changes based on input
@@ -1087,6 +1226,7 @@ void InitICC() {
   int nSuccess = system("rm oAlpha.briccs");
   cout << endl;
 } // InitICC
+#endif
 
 double GetICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
   #ifdef bUseICC
@@ -1402,12 +1542,48 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   #ifdef bExSpread
   ///// Energy spread /////
   nDisEx = g_nDisLvlMax; // start with all discrete levels as possibilities
-  double dSpIMean = g_dSpIMean;
   bool bFoundSpin = false;
   nParI = ranEv.Integer(2);
 
+  // populate J according to set distribution:
+  double adJIPop[g_nConSpbMax];
+  double dJIPopIntegral = 0.0;
+  for(int spb=0; spb<g_nConSpbMax; spb++) {
+    double dSp; // integer or half integer, for density
+    if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
+
+    // distribution:
+    double dSpinCut2 = GetSpinCut2(dExIMean);
+    double dSpDen = (dSp + 0.5) * exp(-pow(dSp + 0.5, 2) / (2 * dSpinCut2))
+      / dSpinCut2;
+    adJIPop[spb] = dSpDen;
+    dJIPopIntegral += dSpDen;
+  } // spb
+
   while(!bFoundSpin) {
-    nSpbI = ranEv.Poisson(dSpIMean);
+    #ifdef bJIUnderlying
+    double dRanJPop = ranEv.Uniform(dJIPopIntegral);
+    double dJPopSum = 0.0;
+    bool bJSuggested = false;
+
+    for(int spb=0; spb<g_nConSpbMax; spb++) {
+      double dJPop = adJIPop[spb];
+      dJPopSum += dJPop; // populate if JPopSum > RanJPop
+      if(!bJSuggested && (dJPopSum > dRanJPop) ) {
+        bJSuggested = true;
+        nSpbI = spb;
+      } // JSuggested
+    } // spb
+    #endif
+
+    #ifdef bJIPoisson
+    nSpbI = ranEv.Poisson(g_dJIMean); // Poisson J dist
+    #endif
+
+    #ifdef bJIGaus
+    nSpbI = ranEv.Gaus(g_dJIMean,g_dJIWid); 
+    if(nSpbI<0) nSpbI = 0; // positive gaussian
+    #endif
 
     int nAttempt = 0;
     int nMaxAttempt = 1000;
@@ -1524,9 +1700,9 @@ void InitFn() {
   fnLDa    = new TF1("fnLDa",    "GetLDa(x)",0,10);
   fnSpCut  = new TF1("fnSpCut",  "sqrt(GetSpinCut2(x))",0,10);
   fnGSFE1  = new TF1("fnGSFE1",  "GetStrE1([0],x)/x**3",0,18);
-  fnGSFM1  = new TF1("fnGSFM1",  "GetStrM1(x)/x**3",0,12);
-  fnGSFE2  = new TF1("fnGSFE2",  "GetStrE2(x)/x**5",0,12);
-  fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,12);
+  fnGSFM1  = new TF1("fnGSFM1",  "GetStrM1(x)/x**3",0,18);
+  fnGSFE2  = new TF1("fnGSFE2",  "GetStrE2(x)/x**5",0,18);
+  fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,18);
 
   double dEx = 0.5 * g_dExIMax; // spincut is slowly varying fn of E
   g_hJIntrins = new TH1D("hJIntrins","Underlying J Dist", 
