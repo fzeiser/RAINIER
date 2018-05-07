@@ -248,7 +248,7 @@ void AnalyzeJPop(int exim0 = nExIMean - 1, int real0 = nReal -1) {
         for(int lvl=0; lvl<nPopLvl; lvl++) {
           int nLvl = anPopLvl[lvl];
           int nLvlJ = adDisSp[nLvl];
-          int nLvlPop = ahDisPop[real][exim]->GetBinContent(nLvl);
+          int nLvlPop = ahDisPop[real][exim]->GetBinContent(nLvl+1);
 
           agrJPop[real][exim]->SetPoint(lvl, nLvlJ + 0.5,
             nLvlPop / double(nEvent) );
@@ -268,7 +268,7 @@ void AnalyzeJPop(int exim0 = nExIMean - 1, int real0 = nReal -1) {
     ahJPop[real0][exim0]->GetYaxis()->SetRangeUser(0,0.24);
     ahJPop[real0][exim0]->Draw();
     TLegend *legJ = new TLegend(0.673,0.620,0.889,0.890);
-    int anColor[] = {kRed, kGreen, kBlue, kMagenta};
+    int anColor[] = {kRed, kGreen, kBlue, kMagenta, kOrange, kBlack, kYellow};
 
     TH1D *hJIntrins = (TH1D*)fSaveFile->Get("hJIntrins");
     hJIntrins->SetLineColor(kOrange);
