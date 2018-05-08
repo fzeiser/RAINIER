@@ -30,6 +30,40 @@
 // - dormant code is error prone
 // the term "spin" usually means "angular momentum" in this code
 
+/////////////////////////////// Program Includes ///////////////////////////////
+#include <stdio.h>
+#include <fstream>
+#include <iostream>
+#include <string.h>
+#include <sstream>
+#include <stdlib.h>
+#include <iomanip> 
+#include "math.h"
+#include "TTimeStamp.h"
+using namespace std;
+#include "TRandom2.h" 
+// 2=Tausworthe is faster and smaller than 3=Mersenne Twister (MT19937)
+// search and replace "TRandom2" to "TRandom3" to change PRNG
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TGraphErrors.h"
+#include "TString.h"
+#include "TFile.h"
+#include "TMath.h"
+#include <TROOT.h>
+#include "TF1.h"
+#include "TF2.h"
+// determine OS for briccs
+#ifdef __linux__
+char cbriccs[] = "briccs";
+#endif
+#ifdef __MACH__
+char cbriccs[] = "briccsMac";
+#endif
+#ifdef _WIN32
+char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////// Input Parameters ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -263,44 +297,6 @@ const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
 const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
 const int g_nEgBin = 500;
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////// End Input Parameters ////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////// Program Includes ///////////////////////////////
-#include <stdio.h>
-#include <fstream>
-#include <iostream>
-#include <string.h>
-#include <sstream>
-#include <stdlib.h>
-#include <iomanip> 
-#include "math.h"
-#include "TTimeStamp.h"
-using namespace std;
-#include "TRandom2.h" 
-// 2=Tausworthe is faster and smaller than 3=Mersenne Twister (MT19937)
-// search and replace "TRandom2" to "TRandom3" to change PRNG
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TGraphErrors.h"
-#include "TString.h"
-#include "TFile.h"
-#include "TMath.h"
-#include <TROOT.h>
-#include "TF1.h"
-#include "TF2.h"
-// determine OS for briccs
-#ifdef __linux__
-char cbriccs[] = "briccs";
-#endif
-#ifdef __MACH__
-char cbriccs[] = "briccsMac";
-#endif
-#ifdef _WIN32
-char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
-#endif
-
 /////////////////////////////// Parallel Settings //////////////////////////////
 // should handle itself, email me if you get it to work on Mac or PC
 #ifdef __CLING__
@@ -354,6 +350,10 @@ const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
 const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////// End Input Parameters ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Discrete Input File //////////////////////////////////
 double g_adDisEne[g_nDisLvlMax]; // discrete lvl energy
