@@ -220,6 +220,8 @@ const double g_dJIWid = 0.5;
 const double g_dExIMax = 16.0; // MeV; above max population energy
 const char popFile[] = "Nd144Pop.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
+const int g_nExPopI = 71; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
+const int g_nSpPopIBin = 10; // spins 0-9
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
 #endif
 

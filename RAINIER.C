@@ -173,8 +173,6 @@ void PrintDisLvl() {
 TH2D *g_h2PopDist;
 #ifdef bExFullRxn
 /////////////////////// TALYS Rxn Population File //////////////////////////////
-const int g_nExPopI = 71; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
-const int g_nSpPopIBin = 10; // spins 0-9
 void ReadPopFile() {
   cout << "Reading Population File" << endl;
   // copy the "Population of Z= 60 N= 84 (144Nd) before decay" section 
