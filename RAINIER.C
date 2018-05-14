@@ -92,6 +92,7 @@ void ReadDisInputFile() {
   ifstream lvlFile;
   TString szFile = g_sExec_dir + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
   lvlFile.open(szFile.Data());
+  if (lvlFile.fail()) {cerr << "Level File could not be opened" << endl; exit(0);}
 
   string sNucSearchLine;
   string sChem;
@@ -199,6 +200,7 @@ void ReadPopFile() {
 
   ifstream filePop;
   filePop.open(popFile);
+  if (filePop.fail()) {cerr << "PopFile could not be opened" << endl; exit(0);}
   string sLine;
   getline(filePop,sLine); //header " bin    Ex    Popul.    J= 0.0    J= 1.0..."
   getline(filePop,sLine); // header "blank line"
