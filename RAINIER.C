@@ -30,6 +30,40 @@
 // - dormant code is error prone
 // the term "spin" usually means "angular momentum" in this code
 
+/////////////////////////////// Program Includes ///////////////////////////////
+#include <stdio.h>
+#include <fstream>
+#include <iostream>
+#include <string.h>
+#include <sstream>
+#include <stdlib.h>
+#include <iomanip> 
+#include "math.h"
+#include "TTimeStamp.h"
+using namespace std;
+#include "TRandom2.h" 
+// 2=Tausworthe is faster and smaller than 3=Mersenne Twister (MT19937)
+// search and replace "TRandom2" to "TRandom3" to change PRNG
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TGraphErrors.h"
+#include "TString.h"
+#include "TFile.h"
+#include "TMath.h"
+#include <TROOT.h>
+#include "TF1.h"
+#include "TF2.h"
+// determine OS for briccs
+#ifdef __linux__
+char cbriccs[] = "briccs";
+#endif
+#ifdef __MACH__
+char cbriccs[] = "briccsMac";
+#endif
+#ifdef _WIN32
+char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
+#endif
+
 /////////////////////////// Settings & Parameters ///////////////////////////////
 #include "settings.h" // all (or most) parameters for the simulations
 
