@@ -14,7 +14,7 @@ Fork/clone this repository or download zipfiles and extract to `/path/to/RAINIER
 
 A) Location independent usage:
 
- * Set the environment variable `RAINIER_PATH`; To do this, execute the following in terminal, or save in `.bashrc` / `.bash_profile`
+ * Set the environment variable `RAINIER_PATH`; To do this, execute the following in terminal, or save in `.bashrc` / `.bash_profile`. *Remember* to restart the terminal, such that the variable is actually exported!
     
     ```
     export RAINIER_PATH=/path/to/RAINIER
