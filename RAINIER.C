@@ -17,7 +17,9 @@
 // |############################################|
 // '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 // Randomizer of Assorted Initial Nuclear Intensities and Emissions of Radiation
-// to run in bash:
+// Follow readme to run in bash
+// A) via run_RAINIER.sh script
+// B) direct; but need to copy the settings.h file to the RAINIER directory 
 // $ root RAINIER.C++
 
 // doubles, ints, and bools marked with prescript "d", "n", and "b" respectively
