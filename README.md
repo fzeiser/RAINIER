@@ -25,13 +25,13 @@ A) Location independent usage:
 
     ```
     cd /path/to/RAINIER/sample_folder
-    /path/to/RAINIER/runRAINER.sh
+    /path/to/RAINIER/runRAINIER.sh
     ```
 
  * You might need to give you the permissions to execute the expect script:
 
     ```
-    chmod u+x /path/to/RAINIER/runRAINER.sh
+    chmod u+x /path/to/RAINIER/runRAINIER.sh
     ```
 
 B) Running the code "directly":
