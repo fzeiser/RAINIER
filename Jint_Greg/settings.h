@@ -218,7 +218,7 @@ const double g_dJIWid = 0.5;
 
 #ifdef bExFullRxn // from a TALYS output file if available
 const double g_dExIMax = 7.5; // MeV; above max population energy
-const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combEB06.dat"; // made from TALYS "outpopulation y"
+const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
 const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
 const int g_nSpPopIBin = 10; // spins 0-9
