@@ -15,6 +15,17 @@ sns.set_style("ticks")
 cwd = os.getcwd()
 ###########
 
+def rhoCT(Ex,T,E0):
+	E = Ex-E0
+	return exp(E/T)/T
+
+from decimal import Decimal
+print '%.2E' % Decimal(rhoCT(6.5,T=0.425,E0=-0.456))
+# print rhoCT(6.5,T=0.44,E0=-0.456)
+
+
+
+###########
 # transform strength.nrm to f
 def convertStrength(filename):
     data_ocl = np.loadtxt(filename)
@@ -67,6 +78,7 @@ def ReadFiles(folder, label):
 			 'label':label}
 	return data
 
+OCL_Greg_rhotot = ReadFiles(cwd+"/Jint_Greg_rhotot","Greg_rhotot")
 OCL_Greg = ReadFiles(cwd+"/Jint_Greg","Greg")
 OCL_EB06 = ReadFiles(cwd+"/Jint_EB06","EB06")		   
 
@@ -75,18 +87,28 @@ OCL_EB06 = ReadFiles(cwd+"/Jint_EB06","EB06")
 ###############################
 # Initialize figure
 # plt.figure()
-fig= plt.figure(0)
-ax = fig.add_subplot(111)
+fig= plt.figure("NLD")
+ax = fig.add_subplot(211)
 ax.set_yscale("log", nonposy='clip')
 
 ax.tick_params("x", top="off")
 ax.tick_params("y", right="off")
 
-def plotData(data, dicEntry):
-	return ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], yerr=data[dicEntry][:,2], markersize=4, linewidth=1.5, fmt='v-', label=data["label"])
+def plotData(data, dicEntry, fmt='v-'):
+	try:
+		plot = ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], yerr=data[dicEntry][:,2], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"])
+	except (IndexError):
+		# plot = ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"])
+		plot = ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt)
 
-OCL_Greg_nld = plotData(OCL_Greg, dicEntry="nld")
+	return plot
+
+OCL_Greg_nld = plotData(OCL_Greg, dicEntry="nld", fmt="v--")
+OCL_Greg_rhotot_nld = plotData(OCL_Greg_rhotot, dicEntry="nld")
 OCL_EB06_nld = plotData(OCL_EB06, dicEntry="nld")
+
+NLD_true = np.loadtxt("misc/NLD_exp.dat")
+plt.plot(NLD_true[:,0],NLD_true[:,1], "-", label="NLD_true")
 
 handles, labels = ax.get_legend_handles_labels()
 lgd1= ax.legend(handles, labels, loc=4)
@@ -95,17 +117,23 @@ plt.xlabel(r'$E_x$ [MeV]',fontsize="medium")
 plt.ylabel(r'levels/MeV',fontsize="medium")
 
 #############################
-fig= plt.figure(1)
-ax = fig.add_subplot(111)
+# fig= plt.figure("Ratios NLD")
+ax = fig.add_subplot(212)
 # ax.set_yscale("log", nonposy='clip')
 
 ax.tick_params("x", top="off")
 ax.tick_params("y", right="off")
-OCL_Greg_nld_un = unumpy.uarray(OCL_Greg["nld"][:,1],std_devs=OCL_Greg["nld"][:,2])
-OCL_EB06_nld_un = unumpy.uarray(OCL_EB06["nld"][:,1],std_devs=OCL_EB06["nld"][:,2])
-ratio = OCL_Greg_nld_un/OCL_EB06_nld_un
 
-ratio = ax.errorbar(OCL_EB06["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v-', color="black", label="ratio nld Greg/EB06")
+def calcRatio(set1, set2, attribute):
+	set1un = unumpy.uarray(set1[attribute][:,1],std_devs=set1[attribute][:,2])
+	set2un = unumpy.uarray(set2[attribute][:,1],std_devs=set2[attribute][:,2])
+	return set1un/set2un
+
+ratio = calcRatio(OCL_Greg,OCL_EB06, "nld")
+ratio_plot = ax.errorbar(OCL_EB06["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v--', color="grey", label="ratio nld Greg/EB06")
+ratio = calcRatio(OCL_Greg_rhotot,OCL_EB06, "nld")
+ratio_plot = ax.errorbar(OCL_EB06["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v-', color="black", label="ratio nld Greg_rhotot/EB06")
+
 ax.axhline(1, color='r')
 
 handles, labels = ax.get_legend_handles_labels()
@@ -118,8 +146,8 @@ plt.ylabel(r'ratio',fontsize="medium")
 
 ###############################
 
-fig= plt.figure(2)
-ax = fig.add_subplot(111)
+fig= plt.figure("gSF")
+ax = fig.add_subplot(211)
 ax.set_yscale("log", nonposy='clip')
 
 ax.tick_params("x", top="off")
@@ -143,8 +171,19 @@ ax.tick_params("y", right="off")
 # OCL_EB06_tr = ax.plot(OCL_EB06["trans"][:,0], OCL_EB06["trans"][:,1], '--',markersize=4, linewidth=1.5, color="black")
 # OCL_EB06.update({"plt":OCL_EB06_sf, "plt_trans":OCL_EB06_tr})
 
-OCL_Greg_nld = plotData(OCL_Greg, dicEntry="strength")
-OCL_EB06_nld = plotData(OCL_EB06, dicEntry="strength")
+OCL_Greg_plot = plotData(OCL_Greg, dicEntry="strength")
+OCL_Greg_rhotot_plot = plotData(OCL_Greg_rhotot, dicEntry="strength", fmt="--")
+OCL_EB06_plot = plotData(OCL_EB06, dicEntry="strength")
+
+plt.gca().set_prop_cycle(None) # reset color cycle
+
+OCL_Greg_plot = plotData(OCL_Greg, dicEntry="trans", fmt="--")
+OCL_Greg_rhotot_plot = plotData(OCL_Greg_rhotot, dicEntry="trans", fmt="--")
+OCL_EB06_plot = plotData(OCL_EB06, dicEntry="trans", fmt="--")
+
+gSF_true = np.loadtxt("misc/GSFTable_py.dat")
+gSF_true_tot = gSF_true[:,1] + gSF_true[:,2]
+gSF_true_plot = plt.plot(gSF_true[:140,0],gSF_true_tot[:140], "-", label="gSF_true")
 
 handles, labels = ax.get_legend_handles_labels()
 lgd1= ax.legend(handles, labels, loc=4)
@@ -158,5 +197,31 @@ lgd1= ax.legend(handles, labels, loc=4)
 
 plt.xlabel(r'$E_\gamma$ [MeV]',fontsize="medium")
 plt.ylabel(r'gSF',fontsize="medium")
+
+#############################
+# fig= plt.figure("Ratios gSF")
+ax = fig.add_subplot(212)
+# ax.set_yscale("log", nonposy='clip')
+
+ax.tick_params("x", top="off")
+ax.tick_params("y", right="off")
+
+ratio = calcRatio(OCL_Greg,OCL_EB06, "strength")
+ratio_plot = ax.errorbar(OCL_EB06["strength"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v-', color="black", label="ratio gsf Greg/EB06")
+
+ratio = calcRatio(OCL_Greg_rhotot,OCL_EB06, "strength")
+ratio_plot = ax.errorbar(OCL_EB06["strength"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v--', color="grey", label="ratio gsf Greg_rhotot/EB06")
+
+ax.axhline(1, color='r')
+
+handles, labels = ax.get_legend_handles_labels()
+lgd1= ax.legend(handles, labels, loc=4)
+
+ax.set_ylim(0,2)
+
+plt.xlabel(r'$E_\gamma$ [MeV]',fontsize="medium")
+plt.ylabel(r'ratio',fontsize="medium")
+
+###############################
 
 plt.show()
