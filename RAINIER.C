@@ -68,15 +68,7 @@ char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
 
 /////////////////////////// Settings & Parameters ///////////////////////////////
 #include "settings.h" // all (or most) parameters for the simulations
-
-// if executing RAINIER from another directory
-string g_sExec_dir;
-string GetExecDir(){
-    string file_path = __FILE__;
-    string exec_dir = file_path.substr(0, file_path.find_last_of("/\\"));
-    // return chdir(exec_dir.c_str());
-    return exec_dir;
-}
+string g_sRAINIERPath; // Path to RAINIER
 
 ///////////////////////// Discrete Input File //////////////////////////////////
 double g_adDisEne[g_nDisLvlMax]; // discrete lvl energy
@@ -92,7 +84,7 @@ double g_adDisGamICC[g_nDisLvlMax][g_nDisLvlGamMax]; // daughter Alpha ICC
 double g_dECrit; // trust lvl scheme up to this E, determined by g_nDisLvlMax
 void ReadDisInputFile() {
   ifstream lvlFile;
-  TString szFile = g_sExec_dir + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
+  TString szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
   lvlFile.open(szFile.Data());
   if (lvlFile.fail()) {cerr << "Level File could not be opened" << endl; exit(0);}
 
@@ -910,17 +902,17 @@ double GetBrICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
     case 0: return 0.0; break;
     case 1: nSuccess = system(
       Form("%s%s -Z %d -g %f -L E1 -w %s > oAlpha.briccs", 
-      g_sExec_dir,cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break; // MeV
+      g_sRAINIERPath,cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break; // MeV
     case 2: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L M1+E2 -d %f -w %s > oAlpha.briccs", 
-      g_sExec_dir, cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) ); 
+      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) ); 
       nReadLine = 11; break;
     case 3: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L M1 -w %s > oAlpha.briccs", 
-      g_sExec_dir, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
+      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     case 4: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L E2 -w %s > oAlpha.briccs", 
-      g_sExec_dir, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
+      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     default: cerr << "err: impossible transistion" << endl;
   } // transistion
   if(nSuccess) cerr << "err: BrIcc failure" << endl;
@@ -1501,7 +1493,10 @@ TGraph *g_grTotWidAvg       [g_nExIMean];
 void RAINIER(int g_nRunNum = 1) {
   cout << "Starting RAINIER" << endl;
   TTimeStamp tBegin;
-  g_sExec_dir = GetExecDir();
+  try {g_sRAINIERPath = string(std::getenv("RAINIER_PATH"));} 
+      catch (std::logic_error&) {
+      	cout<< "RAINIER_PATH not set as environment variable"<< endl;
+      	g_sRAINIERPath=".";};
   TString sSaveFile = TString::Format("Run%04d.root",g_nRunNum);
   TFile *fSaveFile = new TFile(sSaveFile, "recreate");
   ReadDisInputFile();
@@ -1954,6 +1949,11 @@ void RAINIER(int g_nRunNum = 1) {
   double dElapsedSec = double(tEnd.GetSec() - tBegin.GetSec());
   cout << "Time elapsed during RAINIER execution: " << dElapsedSec << " sec" 
     << endl;
-  // gROOT->ProcessLine(".L Analyze.C++"); // load the separate analysis file
-  // gROOT->ProcessLine("RetrievePars()"); // linking files is always wonky in ROOT
+  gROOT->ProcessLine(".L $RAINIER_PATH/Analyze.C++"); // load the separate analysis file
+  gROOT->ProcessLine("RetrievePars()"); // linking files is always wonky in ROOT
 } // main
+
+// copy of the function above to ensure that one can run RAINIER directly, or runRAINIER.sh in a seperate folder
+void RAINIER_copy(int g_nRunNum = 1){
+	RAINIER(g_nRunNum);
+}
