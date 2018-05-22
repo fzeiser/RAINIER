@@ -901,18 +901,18 @@ double GetBrICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
   switch(nTransMade) {
     case 0: return 0.0; break;
     case 1: nSuccess = system(
-      Form("%s%s -Z %d -g %f -L E1 -w %s > oAlpha.briccs", 
-      g_sRAINIERPath,cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break; // MeV
+      Form("%s/%s -Z %d -g %f -L E1 -w %s > oAlpha.briccs", 
+      g_sRAINIERPath.c_str(),cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break; // MeV
     case 2: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L M1+E2 -d %f -w %s > oAlpha.briccs", 
-      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) ); 
+      g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) ); 
       nReadLine = 11; break;
     case 3: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L M1 -w %s > oAlpha.briccs", 
-      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
+      g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     case 4: nSuccess = system(
       Form("%s/%s -Z %d -g %f -L E2 -w %s > oAlpha.briccs", 
-      g_sRAINIERPath, cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
+      g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     default: cerr << "err: impossible transistion" << endl;
   } // transistion
   if(nSuccess) cerr << "err: BrIcc failure" << endl;
