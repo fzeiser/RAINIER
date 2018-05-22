@@ -39,8 +39,8 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
 #else
 
   #ifdef bLD_CTM
-  const double g_dTemp =  0.44; // MeV
-  const double g_dE0   =  0.12; // MeV
+  const double g_dTemp =  0.425; // MeV
+  const double g_dE0   =  -0.456; // MeV
   //const double g_dE0   = -1.004 + 0.5 * g_dDeuPair; // MeV; von egidy09 fit
   #endif
   
