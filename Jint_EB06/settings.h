@@ -73,12 +73,17 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   ///// Spin Cutoff /////
   // choose one:
   #define bJCut_VonEgidy05 // low-energy model
+  #define bJCut_UsrDef_Shift // together with EB05 to get "Oslo"-like spincut
   //#define bJCut_SingPart // single particle model
   // #define bJCut_RigidSph // rigid sphere model
   //#define bJCut_VonEgidy09 // empirical fit 
   //#define bJCut_TALYS // TALYS rigid sphere and discrete interpolation
   //#define bJCut_UsrDef // user defined
-  
+
+  #ifdef bJCut_UsrDef_Shift
+  double g_dE1Usr = 0.12; // shift for Ex in spin-cut -- in Oslo different from g_dE0/g_dE1! 
+  #endif
+
   #ifdef bJCut_VonEgidy09
   const double g_dDeuPair = 0.62834; // MeV;
   #endif
@@ -221,7 +226,7 @@ const double g_dExIMax = 7.5; // MeV; above max population energy
 const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combEB06.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
 const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
-const int g_nSpPopIBin = 10; // spins 0-9
+const int g_nSpPopIBin = 23; // spins 0-22
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
 #endif
 
@@ -242,7 +247,7 @@ const int g_nEgBin = 500;
 // cling in root6 won't parse omp.h. but man, root5 flies with 24 cores!
 #else
 #ifdef __linux__ // MacOS wont run omp.h by default, might exist workaround
-    //#define bParallel // Parallel Option
+    // #define bParallel // Parallel Option
     // ROOT hisograms not thread safe, but only miss ~1e-5 events
 #endif // linux
 #endif // cling
@@ -288,7 +293,7 @@ const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
 const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
-const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
+const int g_nConSpbMax = 30; // constructed # spin bins, small for light ion rxn
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////// End Input Parameters ////////////////////////////////////

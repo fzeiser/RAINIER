@@ -70,20 +70,15 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
   #endif
   
-///// Spin Cutoff /////
+  ///// Spin Cutoff /////
   // choose one:
   #define bJCut_VonEgidy05 // low-energy model
-  #define bJCut_UsrDef_Shift // together with EB05 to get "Oslo"-like spincut
   //#define bJCut_SingPart // single particle model
   // #define bJCut_RigidSph // rigid sphere model
   //#define bJCut_VonEgidy09 // empirical fit 
   //#define bJCut_TALYS // TALYS rigid sphere and discrete interpolation
   //#define bJCut_UsrDef // user defined
-
-  #ifdef bJCut_UsrDef_Shift
-  double g_dE1Usr = 0.12; // shift for Ex in spin-cut -- in Oslo different from g_dE0/g_dE1! 
-  #endif
-
+  
   #ifdef bJCut_VonEgidy09
   const double g_dDeuPair = 0.62834; // MeV;
   #endif
@@ -223,7 +218,7 @@ const double g_dJIWid = 0.5;
 
 #ifdef bExFullRxn // from a TALYS output file if available
 const double g_dExIMax = 7.5; // MeV; above max population energy
-const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
+const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combEB06.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
 const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
 const int g_nSpPopIBin = 10; // spins 0-9
@@ -293,7 +288,7 @@ const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
 const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
-const int g_nConSpbMax = 9; // constructed # spin bins, small for light ion rxn
+const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////// End Input Parameters ////////////////////////////////////

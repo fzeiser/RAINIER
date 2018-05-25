@@ -263,6 +263,14 @@ double GetSpinCut2(double dEx) {
   double dLDa = GetLDa(dEx);
   #endif
 
+  #ifdef bJCut_UsrDef_Shift
+  if (dEx-g_dE1Usr<0){
+      dEff = 0.0000000001;
+  } else {
+      dEff = dEx-g_dE1Usr;
+  }
+  #endif
+
   #ifdef bJCut_VonEgidy05 // Von Egidy PRC72,044311(2005)
   double dSpinCut2 = 0.0146 * pow(g_nAMass, 5.0/3.0)
   * (1 + sqrt(1 + 4 * dLDa * dEff)) / (2 * dLDa);
@@ -313,7 +321,7 @@ double GetSpinCut2(double dEx) {
   #ifdef bJCut_UsrDef // choose/add what you like, these are some I've found:
   // everyone and their mother seems to have a favorite spin cutoff model
   //double dSpinCut2 = pow(0.83 * pow(g_nAMass,0.26),2); // TALYS 1.8 global
-  double dSpinCut2 = pow(0.98 * pow(g_nAMass,0.29),2); // DICEBOX CTM
+  // double dSpinCut2 = pow(0.98 * pow(g_nAMass,0.29),2); // DICEBOX CTM
   //double dSpinCut2 = 0.0888*sqrt(dLDa * dEff) * pow(g_nAMass,2/3.0); //DICEBOX
   #endif
 
@@ -1429,11 +1437,20 @@ void InitFn() {
   fnGSFE2  = new TF1("fnGSFE2",  "GetStrE2(x)/x**5",0,20);
   fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,20);
 
+  TString smyFile = "GSFtot.dat";
+  ofstream ofGSF; 
+  ofGSF.open(smyFile.Data());
+  ofGSF << "#Energy \t GSF" << endl;
+  for(int i = 0; i< 150; i++){
+    double energy = 0.1*i;
+    ofGSF << energy << "\t" << fnGSFTot->Eval(energy) << endl;
+  }
+
   double dEx = 0.5 * g_dExIMax; // spincut is slowly varying fn of E
   g_hJIntrins = new TH1D("hJIntrins","Underlying J Dist", 
-    int(g_dPlotSpMax), 0.0, int(g_dPlotSpMax) );
+    int(g_nConSpbMax), 0.0, int(g_nConSpbMax) );
   double dSpinCut2 = GetSpinCut2(dEx);
-  for(int spb=0; spb<int(g_dPlotSpMax); spb++) {
+  for(int spb=0; spb<int(g_nConSpbMax); spb++) {
     double dSp;
     if(g_bIsEvenA){ dSp = spb; } else { dSp = spb + 0.5; }
     double dSpDen = (dSp + 0.5) * exp(-pow(dSp + 0.5, 2) / (2 * dSpinCut2))
@@ -1446,22 +1463,22 @@ void InitFn() {
   double dspStart; // startSpin to plot
   if(g_bIsEvenA){ dspStart=0; } else { dspStart+=0.5; }
   g_h2JIntrins = new TH2D("h2JIntrins","Underlying J Dist for E>E_crit",
-                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6+1), 
+                          g_nConSpbMax+1,dspStart,int(g_nConSpbMax+0.6+1), 
                           g_nConEBin, g_dECrit, g_dExIMax);
 
-  double adJInt[int(g_dPlotSpMax+0.6+1)]; // densities for the underlying J
+  double adJInt[int(g_nConSpbMax+0.6+1)]; // densities for the underlying J
   double adJIntNorm;                    // Normalization
   double dSp; // integer or half integer determination for density
   for(int ex=0; ex<g_nConEBin; ex++) {
     adJIntNorm = 0;
     // Get density adJInt for each spin
-    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_nConSpbMax; spb++) {     
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] = GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
         adJIntNorm += adJInt[spb];
     }
     // Normalize for each Ex bin
-    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_nConSpbMax; spb++) {     
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] /= adJIntNorm;
         g_h2JIntrins->Fill(dSp,g_adConExCen[ex],adJInt[spb]);
@@ -1471,6 +1488,26 @@ void InitFn() {
   for(int nbin=0; nbin<g_h2JIntrins->GetSize()+1; nbin++){
     g_h2JIntrins->SetBinError(nbin,0);
   }
+
+
+
+  smyFile = "NLDcont.dat";
+  ofstream ofNLD; 
+  ofNLD.open(smyFile.Data());
+  ofNLD << "#Energy \t NLD" << endl;
+  for(int ex=0; ex<g_nConEBin; ex++) {
+    double energy = g_adConExCen[ex];
+    double rho = 0;
+    // Get density adJInt for each spin
+    for(int spb=0; spb<=40; spb++) {     
+        if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
+        rho += GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
+    }
+  ofNLD << energy << "\t" << rho << endl;
+  }
+
+
+
 
 } // InitFn
 
@@ -1535,7 +1572,7 @@ void RAINIER(int g_nRunNum = 1) {
       g_ah2PopLvl[real][exim] = new TH2D(
         Form("h2ExI%dPopLvl_%d",exim,real),
         Form("Population of Levels: %2.1f MeV, Real%d",dExIMean,real),
-        2*g_dPlotSpMax, -g_dPlotSpMax, g_dPlotSpMax,
+        2*g_nConSpbMax, -g_nConSpbMax, g_nConSpbMax,
         g_dExIMax / g_dConESpac, 0, g_dExIMax);
 
       double dFeedTimeMax = (270-20) / (5.5-11.0) * dExIMean + 520; // fs
@@ -1560,7 +1597,7 @@ void RAINIER(int g_nRunNum = 1) {
       g_ah2PopI[real][exim] = new TH2D(
         Form("h2ExI%dPopI_%d",exim,real),
         Form("E_{x,i} = %2.1f Events Populated in Real%d",dExIMean,real),
-        g_dPlotSpMax,0,g_dPlotSpMax, 900,0,g_dExIMax);
+        g_nConSpbMax,0,g_nConSpbMax, 900,0,g_dExIMax);
 
       double dEgMax = g_dExIMax;
       for(int dis=0; dis<g_nDisLvlMax; dis++) {
@@ -1608,7 +1645,7 @@ void RAINIER(int g_nRunNum = 1) {
       g_ahJPop[real][exim] = new TH1D(
         Form("hExI%dJPop_%d",exim,real),
         Form("Spin Initial Pop: %2.1f MeV, Real%d",dExIMean,real),
-        int(g_dPlotSpMax),0,g_dPlotSpMax); // wont have this plot for half int J
+        int(g_nConSpbMax),0,g_nConSpbMax); // wont have this plot for half int J
 
       #ifdef bExSingle
       // save initial widths and rands so dont need to recompute
@@ -1919,7 +1956,7 @@ void RAINIER(int g_nRunNum = 1) {
   SAVE_PAR(ofParam,g_dECrit);
   SAVE_PAR(ofParam,g_dExISpread);
   SAVE_PAR(ofParam,g_dExIMax);
-  SAVE_PAR(ofParam,g_dPlotSpMax);
+  SAVE_PAR(ofParam,g_nConSpbMax);
   SAVE_PAR(ofParam,g_nReal);
   SAVE_PAR(ofParam,g_nExIMean);
   SAVE_PAR(ofParam,g_nEvent);
