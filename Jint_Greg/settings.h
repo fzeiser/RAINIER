@@ -5,11 +5,19 @@
 ////////////////////// Input Parameters ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////// Run Settings ////////////////////////////////////////////
+const int g_nReal = 1; // number of realizations of nuclear level scheme
+const int g_nEvent = 1e2; // number of events per realization (and ExI in bExSpread)
+const int g_nEvUpdate = 1e2; // print progress to screen at this interval
+
 ////////////////////// Discrete Settings ///////////////////////////////////////
 //#define bPrintLvl // print both discrete and constructed lvl schemes
 const int g_nZ = 94; // proton number
 const int g_nAMass = 240; // proton + neutron number
 const int g_nDisLvlMax = 18; // only trust level scheme to here, sets ECrit
+
+const bool g_bIsEvenA = !(g_nAMass % 2);
+const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
 
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
@@ -21,9 +29,7 @@ const int g_nConEBin = 400; // number of energy bins in constructed scheme
 const double g_dConESpac = 0.01; // MeV; wont matter if forcing bin number
 int g_nConEBin;
 #endif // bForceBinNum
-
-///// Level Density, LD, model /////
-// choose one, fill in corresponding parameters
+const int g_nConSpbMax = 21; // constructed # spin(s) (#bins = +1); can choose small for light ion rxn
 
 ///// Level Density, LD, model /////
 // choose one, fill in corresponding parameters
@@ -70,7 +76,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
   #endif
   
-///// Spin Cutoff /////
+  ///// Spin Cutoff (Underlying) /////
   // choose one:
   #define bJCut_VonEgidy05 // low-energy model
   #define bJCut_UsrDef_Shift // together with EB05 to get "Oslo"-like spincut
@@ -95,7 +101,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
 
 #endif // bLD_Table
 
-///// Pairity Dependence /////
+///// Pairity Dependence (Underlying) /////
 // choose one:
 #define bPar_Equipar // equal +/- states, usually a good approx
 //#define bPar_Edep // exponential asymptotic dependence
@@ -113,7 +119,7 @@ const double g_dParD = 0.0; // MeV
 // choose one:
 #define bWFD_PTD // fastest version of the Porter Thomas Distribution, nu = 1
 //#define bWFD_nu // set the chi^2 degrees of freedom, nu - slow
-//#define bWFD_Off // no fluctuations - nearly TALYS with level spac fluct
+// #define bWFD_Off // no fluctuations - nearly TALYS with level spac fluct
 #ifdef bWFD_nu
 const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
 // generally not accepted to use
@@ -161,6 +167,15 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   #ifdef bE2_SingPart
   const double g_dSpSigE2 = 4e-11; // MeV^-5
   #endif
+
+  #ifdef bE2_StdLor
+  // Prestwich Physics A Atoms and Nuclei 315, 103-111 (1984)
+  const double g_dEneE2 = 63.0 * pow(g_nAMass,-1/3.0);
+  const double g_dGamE2 = 6.11 - 0.012 * g_nAMass;
+  const double g_dSigE2 = 1.4e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
+  #endif
+
+  const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
 #endif // bGSF_Table
 
 ////////////////////// Internal Conversion Coefficient, ICC, Settings //////////
@@ -170,11 +185,6 @@ const char g_sBrIccModel[] = "BrIccFO"; // Conversion data table
 const int g_nBinICC = 100; // Energy bins of BrIcc - more takes lot init time
 const double g_dICCMin = g_dConESpac / 2.0; // uses 1st Ebin ICC val below this
 const double g_dICCMax = 1.0; // MeV; Uses last Ebin ICC value for higher E
-
-////////////////////// Run Settings ////////////////////////////////////////////
-const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e5; // number of events per realization (and ExI in bExSpread)
-const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Excitation Settings /////////////////////////////////////
 // choose one, fill in corresponding params:
@@ -221,51 +231,25 @@ const double g_dJIWid = 0.5;
 #endif
 #endif
 
+// #ifdef bExFullRxn // from a TALYS output file if available
+// const double g_dExIMax = 7.8; // MeV; above max population energy
+// const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
+// // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
+// const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
+// const int g_nSpPopIBin = 9+1; // spins 0-10
+// const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
+// // #define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
+// #endif
+
 #ifdef bExFullRxn // from a TALYS output file if available
 const double g_dExIMax = 7.5; // MeV; above max population energy
 const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
 const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
-const int g_nSpPopIBin = 10; // spins 0-9
+const int g_nSpPopIBin = 9+1; // spins 0-10
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
+#define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
 #endif
-
-////////////////////// Analysis Settings ///////////////////////////////////////
-const double g_dPlotSpMax = 15.0;
-const int nExJBin = 100;  // n Ex Bins for plotting underlying J
-///// JPop Analysis /////
-//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
-const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
-///// DRTSC Analysis
-//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
-const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
-const int g_nEgBin = 500;
-
-/////////////////////////////// Parallel Settings //////////////////////////////
-// should handle itself, email me if you get it to work on Mac or PC
-#ifdef __CLING__
-// cling in root6 won't parse omp.h. but man, root5 flies with 24 cores!
-#else
-#ifdef __linux__ // MacOS wont run omp.h by default, might exist workaround
-    //#define bParallel // Parallel Option
-    // ROOT hisograms not thread safe, but only miss ~1e-5 events
-#endif // linux
-#endif // cling
-
-#ifdef bParallel
-#ifndef CINT 
-#include "omp.h" // for parallel on shared memory machine (not cluster yet)
-#endif // cint
-#endif // parallel
-
-#ifdef bE2_StdLor
-// Prestwich Physics A Atoms and Nuclei 315, 103-111 (1984)
-const double g_dEneE2 = 63.0 * pow(g_nAMass,-1/3.0);
-const double g_dGamE2 = 6.11 - 0.012 * g_nAMass;
-const double g_dSigE2 = 1.4e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
-#endif
-
-const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
 
 #ifdef bExSelect
 const int g_nStateI  = sizeof(g_adExI)     / sizeof(double);
@@ -291,9 +275,33 @@ const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
 const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
 const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
-const bool g_bIsEvenA = !(g_nAMass % 2);
-const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
-const int g_nConSpbMax = 9; // constructed # spin bins, small for light ion rxn
+////////////////////// Analysis Settings ///////////////////////////////////////
+const double g_dPlotSpMax = 15.0;
+const int nExJBin = 100;  // n Ex Bins for plotting underlying J
+///// JPop Analysis /////
+//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
+const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
+///// DRTSC Analysis
+//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
+const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
+const int g_nEgBin = 500;
+
+/////////////////////////////// Parallel Settings //////////////////////////////
+// should handle itself, email me if you get it to work on Mac or PC
+#ifdef __CLING__
+// cling in root6 won't parse omp.h. but man, root5 flies with 24 cores!
+#else
+#ifdef __linux__ // MacOS wont run omp.h by default, might exist workaround
+    #define bParallel // Parallel Option
+    // ROOT hisograms not thread safe, but only miss ~1e-5 events
+#endif // linux
+#endif // cling
+// #include "/usr/lib/gcc/x86_64-linux-gnu/5/include/omp.h" 
+#ifdef bParallel
+#ifndef CINT 
+#include "omp.h" // for parallel on shared memory machine (not cluster yet)
+#endif // cint
+#endif // parallel
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////// End Input Parameters ////////////////////////////////////
