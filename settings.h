@@ -10,6 +10,17 @@ const int g_nReal = 1; // number of realizations of nuclear level scheme
 const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
+////////////////////// Analysis Settings ///////////////////////////////////////
+const double g_dPlotSpMax = 10.0;
+const int nExJBin = 100;  // n Ex Bins for plotting underlying J
+///// JPop Analysis /////
+//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
+const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
+///// DRTSC Analysis
+//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
+const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
+const int g_nEgBin = 500;
+
 ////////////////////// Discrete Settings ///////////////////////////////////////
 //#define bPrintLvl // print both discrete and constructed lvl schemes
 const int g_nZ = 60; // proton number
@@ -260,17 +271,6 @@ const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
 #endif
 const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
 const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
-
-////////////////////// Analysis Settings ///////////////////////////////////////
-const double g_dPlotSpMax = 10.0;
-const int nExJBin = 100;  // n Ex Bins for plotting underlying J
-///// JPop Analysis /////
-//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
-const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
-///// DRTSC Analysis
-//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
-const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
-const int g_nEgBin = 500;
 
 /////////////////////////////// Parallel Settings //////////////////////////////
 // should handle itself, email me if you get it to work on Mac or PC
