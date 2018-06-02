@@ -7,7 +7,7 @@
 
 ////////////////////// Run Settings ////////////////////////////////////////////
 const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e2; // number of events per realization (and ExI in bExSpread)
+const int g_nEvent = 1e5; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
@@ -242,25 +242,25 @@ const double g_dJIWid = 0.5;
 #endif
 #endif
 
-// #ifdef bExFullRxn // from a TALYS output file if available
-// const double g_dExIMax = 7.8; // MeV; above max population energy
-// const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
-// // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
-// const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
-// const int g_nSpPopIBin = 9+1; // spins 0-10
-// const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
-// // #define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
-// #endif
-
 #ifdef bExFullRxn // from a TALYS output file if available
-const double g_dExIMax = 7.5; // MeV; above max population energy
-const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
+const double g_dExIMax = 7.8; // MeV; above max population energy
+const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg_J9_2par.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
-const int g_nExPopI = 83; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
+const int g_nExPopI = 85; // bins 0-84; bins + maxlevelstar + 1 = g_nExPopI
 const int g_nSpPopIBin = 9+1; // spins 0-10
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
-#define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
+// #define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
 #endif
+
+// #ifdef bExFullRxn // from a TALYS output file if available
+// const double g_dExIMax = 7.5; // MeV; above max population energy
+// const char popFile[] = "../TALYS_pop_240Pu/240PuPop_combGreg.dat"; // made from TALYS "outpopulation y"
+// // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI
+// const int g_nExPopI = 83; // bins 0-82; bins + maxlevelstar + 1 = g_nExPopI
+// const int g_nSpPopIBin = 9+1; // spins 0-10
+// const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
+// #define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
+// #endif
 
 #ifdef bExSelect
 const int g_nStateI  = sizeof(g_adExI)     / sizeof(double);
