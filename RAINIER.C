@@ -48,6 +48,7 @@ using namespace std;
 // search and replace "TRandom2" to "TRandom3" to change PRNG
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH3D.h"
 #include "TGraphErrors.h"
 #include "TString.h"
 #include "TFile.h"
@@ -174,7 +175,7 @@ void PrintDisLvl() {
   } // lvl
 } // Print Discrete
 
-TH2D *g_h2PopDist;
+TH3D *g_h3PopDist;
 #ifdef bExFullRxn
 /////////////////////// TALYS Rxn Population File //////////////////////////////
 void ReadPopFile() {
@@ -190,13 +191,15 @@ void ReadPopFile() {
   //   maxlevelstar 16
 
   double adEx [g_nExPopI];
-  double adPop[g_nExPopI][g_nSpPopIBin];
+  double adPop[g_nExPopI][g_nSpPopIBin][2];
 
   ifstream filePop;
   filePop.open(popFile);
   if (filePop.fail()) {cerr << "PopFile could not be opened" << endl; exit(0);}
   string sLine;
-  getline(filePop,sLine); //header " bin    Ex    Popul.    J= 0.0    J= 1.0..."
+  //ifdef bParPop_Equipar: header " bin    Ex    Popul.    J= 0.0    J= 1.0..."
+  //else                   header " bin    Ex    Popul.    J= 0.0-   J= 0.0+ ..."
+  getline(filePop,sLine); //header
   getline(filePop,sLine); // header "blank line"
 
   while( getline(filePop, sLine) ) {
@@ -206,23 +209,39 @@ void ReadPopFile() {
     issPop >> nBin >> dEx >> dPopTot;
     adEx[nBin] = dEx; // iss cant input directly into array elements
     for(int s=0; s<g_nSpPopIBin; s++) {
-      double dPop;
-      issPop >> dPop;
-      adPop[nBin][s] = dPop;
+      #ifdef bParPop_Equipar
+        double dPop;
+        issPop >> dPop;
+        // for equal parity: "fake" that all are read as negative parity
+        adPop[nBin][s][0] = 2*dPop; // this should also fix the talys 2x "bug"
+        adPop[nBin][s][1] = 0;
+      #else
+        for(int par=0; par<2; par++) { // read distribution per parity
+          double dPop;
+          issPop >> dPop;
+          adPop[nBin][s][par] = dPop;
+        } // read par
+      #endif //bParPop_Equipar
     } // read J     
   } // read E
 
-  g_h2PopDist = new TH2D("h2PopDist","h2PopDist", 
-    g_nSpPopIBin,0,g_nSpPopIBin, g_nExPopI-1, adEx);
+  // need arrays for TH3D constructor; different from TH2D
+  // arrays give the lower-edges; therefor the size must be nbin+1
+  const double abinPar[3]={0,1,2}; // parity bins; positive:1 and negative:0 
+  double abinSpPop[g_nSpPopIBin+1];
+  for(int binJ=0; binJ<=g_nSpPopIBin; binJ++){
+    abinSpPop[binJ] = binJ;
+  }
+  g_h3PopDist = new TH3D("h3PopDist","h3PopDist", 
+    g_nSpPopIBin, abinSpPop, g_nExPopI-1, adEx, 2, abinPar); 
 
   for(int binE=1; binE<g_nExPopI; binE++) {
     for(int binJ=1; binJ<=g_nSpPopIBin; binJ++) {
-      // levels above Ecrit need to be multiplied by 2:
-      // this is a hidden "feature" of TALYS -- per parity effect?
-      g_h2PopDist->SetBinContent(binJ,binE, 2 * adPop[binE-1][binJ-1]); 
+      for(int binPar=1; binPar<=2; binPar++) {
+        g_h3PopDist->SetBinContent(binJ,binE,binPar,adPop[binE-1][binJ-1][binPar-1]);
+      } // assign par
     } // assign J
   } // assign E
-
 } // ReadPopFile
 #endif // talys input for Oslo Analysis
 
@@ -1334,81 +1353,88 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   // if no level in corresponding bin, searches nearby E bins
   // - not much more you can do when matching continuum and discrete physics
   double dSp = 0.0, dEx = 0.0;
-  double dPopIntegral = g_h2PopDist->Integral(); // could calc outside 
+  double dPopIntegral = g_h3PopDist->Integral(); // could calc outside 
   bool bLvlMatch = false;
 
   // find a lvl from the histogram:
   bool bEJLvlSuggested = false;
   // Dont g_h2PopDist->GetRandom2(dSp, dEx)! ROOT's GetRandom2() is real crap!
+  // Dont g_h3PopDist->GetRandom3(dSp, dEx, par)! ROOT's GetRandom2() is real crap!
   double dRanPop = ranEv.Uniform(dPopIntegral);
   double dPopSum = 0.0;
   for(int binE=1; binE<=g_nExPopI-1; binE++) {
     for(int binJ=1; binJ<=g_nSpPopIBin; binJ++) {
-      // Does not do any interpolation of TALYS hist - room for improvement
-      double dPop = g_h2PopDist->GetBinContent(binJ,binE);
-      dPopSum += dPop; // populate if PopSum > RanPop
-      if(!bEJLvlSuggested && (dPopSum > dRanPop) ) {
-        bEJLvlSuggested = true;
-        dSp = binJ-1; // 1st bin is spin 0 or 0.5
-        double dLowEBdy = g_h2PopDist->GetYaxis()->GetBinLowEdge(binE);
-        double dUpEBdy  = g_h2PopDist->GetYaxis()->GetBinUpEdge(binE);
-        // matching the constructed and discrete regions aint pretty:
-        if(dLowEBdy < g_dECrit + 0.001) { // is discrete
-          // need to be very careful of doublets and precision
-          nExI = -1;
-          bool bDisBinFound = false;
-          for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
-            double dLvlE = g_adDisEne[lvl];
-            // cout << "dLvlE: " << dLvlE << endl;
-            // cout << "dLowEBdy: " << dLowEBdy << endl;
-            if(TMath::Abs(dLowEBdy - dLvlE) < 0.001) {
-              nDisEx = lvl;
-              bDisBinFound = true;
-              bLvlMatch = true;
-            } // match E
-          } // lvl
-          if( !bDisBinFound ) cerr << "err: no discrete match" << endl;
-          if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
-          else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
-          nParI = g_anDisPar[nDisEx];
-          nLvlInBinI = 0;
-        } else { // is constructed
-          dEx = dLowEBdy + ranEv.Uniform(dUpEBdy - dLowEBdy);
-          // assume equipartition
-          nParI = ranEv.Integer(2); // equal positive:1 and negative:0 
-          nSpbI = int(dSp); // should work for both even and odd A
-          nExI = round( (dEx - g_dECrit) / g_dConESpac);
-          if(nExI > g_nConEBin) cerr << "err: ExI above constructed max"
-            << endl;
-          if(nExI < 0) cerr << "err: ExI below constructed scheme" << endl;
+      for(int binPar=1; binPar<=2; binPar++) {
+        // Does not do any interpolation of TALYS hist - room for improvement
+        double dPop = g_h3PopDist->GetBinContent(binJ,binE,binPar);
+        dPopSum += dPop; // populate if PopSum > RanPop
+        if(!bEJLvlSuggested && (dPopSum > dRanPop) ) {
+          bEJLvlSuggested = true;
+          dSp = binJ-1; // 1st bin is spin 0 or 0.5
+          double dLowEBdy = g_h3PopDist->GetYaxis()->GetBinLowEdge(binE);
+          double dUpEBdy  = g_h3PopDist->GetYaxis()->GetBinUpEdge(binE);
+          // matching the constructed and discrete regions aint pretty:
+          if(dLowEBdy < g_dECrit + 0.001) { // is discrete
+            // need to be very careful of doublets and precision
+            nExI = -1;
+            bool bDisBinFound = false;
+            for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
+              double dLvlE = g_adDisEne[lvl];
+              // cout << "dLvlE: " << dLvlE << endl;
+              // cout << "dLowEBdy: " << dLowEBdy << endl;
+              if(TMath::Abs(dLowEBdy - dLvlE) < 0.001) {
+                nDisEx = lvl;
+                bDisBinFound = true;
+                bLvlMatch = true;
+              } // match E
+            } // lvl
+            if( !bDisBinFound ) cerr << "err: no discrete match" << endl;
+            if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
+            else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
+            nParI = g_anDisPar[nDisEx];
+            nLvlInBinI = 0;
+          } else { // is constructed
+            dEx = dLowEBdy + ranEv.Uniform(dUpEBdy - dLowEBdy);
+            #ifdef bParPop_Equipar
+              nParI = ranEv.Integer(2); // equal positive:1 and negative:0 
+            #else 
+              nParI = binPar-1; // selected through the loop
+            #endif // bParPop_Equipar
+            nSpbI = int(dSp); // should work for both even and odd A
+            nExI = round( (dEx - g_dECrit) / g_dConESpac);
+            if(nExI > g_nConEBin) cerr << "err: ExI above constructed max"
+              << endl;
+            if(nExI < 0) cerr << "err: ExI below constructed scheme" << endl;
 
-          // search in bin then nearby
-          bool bPlacedLvl = false;
-          while(!bPlacedLvl) {
-            int nLvlAvail = g_anConLvl[EJP(nExI,nSpbI,nParI)];
-            if(nLvlAvail > 0) { // dont pop lvls that dont exist
-              bLvlMatch = true;
-              bPlacedLvl = true;
-              nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
-              nDisEx = g_nDisLvlMax; // start with all discrete lvls
-            } else { // random walk in energy space, avoid ECrit line
-              int nEBinStep = ranEv.Integer(2);
-              if(nEBinStep) { // 0=down; 1=up
-                nExI++;
-                if(nExI >= g_nConEBin) { // stay below maximum energy
-                  nExI -= 2;
-                } // ex max
-              } else { // step down
-                nExI--;
-                if(nExI < 0 ) { // stay above ECrit
-                  nExI += 2;
-                } // ex min
-              } // increase or decrease E
-            } // lvl avail
-          } // placed lvl
-        } // dis or con
+            // search in bin then nearby
+            bool bPlacedLvl = false;
+            while(!bPlacedLvl) {
+              int nLvlAvail = g_anConLvl[EJP(nExI,nSpbI,nParI)];
+              if(nLvlAvail > 0) { // dont pop lvls that dont exist
+                bLvlMatch = true;
+                bPlacedLvl = true;
+                nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
+                nDisEx = g_nDisLvlMax; // start with all discrete lvls
+              } else { // random walk in energy space, avoid ECrit line
+                int nEBinStep = ranEv.Integer(2);
+                if(nEBinStep) { // 0=down; 1=up
+                  nExI++;
+                  if(nExI >= g_nConEBin) { // stay below maximum energy
+                    nExI -= 2;
+                  } // ex max
+                } else { // step down
+                  nExI--;
+                  if(nExI < 0 ) { // stay above ECrit
+                    nExI += 2;
+                  } // ex min
+                } // increase or decrease E
+              } // lvl avail
+            } // placed lvl
+          } // dis or con
 
-      } // suggestion found
+        } // suggestion found
+
+     } // bin par
     } // bin J
   } // bin E
   if(!bEJLvlSuggested) cerr << "err: lvl not suggested" << endl;

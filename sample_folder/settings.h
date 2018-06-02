@@ -22,10 +22,7 @@ const double g_dConESpac = 0.01; // MeV; wont matter if forcing bin number
 int g_nConEBin;
 #endif // bForceBinNum
 
-///// Level Density, LD, model /////
-// choose one, fill in corresponding parameters
-
-///// Level Density, LD, model /////
+///// Level Density, LD, model (Underlying LD) /////
 // choose one, fill in corresponding parameters
 #define bLD_BSFG // Back Shifted Fermi Gas model
 //#define bLD_CTM // Constant Temperature Model
@@ -70,7 +67,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
   #endif
   
-  ///// Spin Cutoff /////
+  ///// Spin Cutoff (Underlying LD)/////
   // choose one:
   //#define bJCut_VonEgidy05 // low-energy model
   //#define bJCut_SingPart // single particle model
@@ -90,7 +87,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
 
 #endif // bLD_Table
 
-///// Pairity Dependence /////
+///// Pairity Dependence (Underlying LD) /////
 // choose one:
 #define bPar_Equipar // equal +/- states, usually a good approx
 //#define bPar_Edep // exponential asymptotic dependence
@@ -223,7 +220,9 @@ const char popFile[] = "Nd144Pop.dat"; // made from TALYS "outpopulation y"
 const int g_nExPopI = 71; // bins 0-70; bins + maxlevelstar + 1 = g_nExPopI
 const int g_nSpPopIBin = 10; // spins 0-9
 const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
+#define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
 #endif
+
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
 const double g_dPlotSpMax = 10.0;
