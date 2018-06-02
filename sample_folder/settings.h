@@ -5,11 +5,19 @@
 ////////////////////// Input Parameters ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////// Run Settings ////////////////////////////////////////////
+const int g_nReal = 1; // number of realizations of nuclear level scheme
+const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
+const int g_nEvUpdate = 1e2; // print progress to screen at this interval
+
 ////////////////////// Discrete Settings ///////////////////////////////////////
 //#define bPrintLvl // print both discrete and constructed lvl schemes
 const int g_nZ = 60; // proton number
 const int g_nAMass = 144; // proton + neutron number
 const int g_nDisLvlMax = 16; // only trust level scheme to here, sets ECrit
+
+const bool g_bIsEvenA = !(g_nAMass % 2);
+const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
 
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
@@ -21,6 +29,7 @@ const int g_nConEBin = 400; // number of energy bins in constructed scheme
 const double g_dConESpac = 0.01; // MeV; wont matter if forcing bin number
 int g_nConEBin;
 #endif // bForceBinNum
+const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
 
 ///// Level Density, LD, model (Underlying LD) /////
 // choose one, fill in corresponding parameters
@@ -153,7 +162,17 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   #ifdef bE2_SingPart
   const double g_dSpSigE2 = 4e-11; // MeV^-5
   #endif
+
+  #ifdef bE2_StdLor
+  // Prestwich Physics A Atoms and Nuclei 315, 103-111 (1984)
+  const double g_dEneE2 = 63.0 * pow(g_nAMass,-1/3.0);
+  const double g_dGamE2 = 6.11 - 0.012 * g_nAMass;
+  const double g_dSigE2 = 1.4e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
+  #endif
+
 #endif // bGSF_Table
+
+const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
 
 ////////////////////// Internal Conversion Coefficient, ICC, Settings //////////
 //#define bUseICC // ICC = 0.0 otherwise
@@ -162,11 +181,6 @@ const char g_sBrIccModel[] = "BrIccFO"; // Conversion data table
 const int g_nBinICC = 100; // Energy bins of BrIcc - more takes lot init time
 const double g_dICCMin = g_dConESpac / 2.0; // uses 1st Ebin ICC val below this
 const double g_dICCMax = 1.0; // MeV; Uses last Ebin ICC value for higher E
-
-////////////////////// Run Settings ////////////////////////////////////////////
-const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
-const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Excitation Settings /////////////////////////////////////
 // choose one, fill in corresponding params:
@@ -223,6 +237,29 @@ const double g_dExRes = 0.2 / 2.355; // excitation resolution on g_ah2ExEg
 #define bParPop_Equipar // file contains sum of parities only: J= 0, 1,...; otherwise J= 0-, 0+, ...
 #endif
 
+#ifdef bExSelect
+const int g_nStateI  = sizeof(g_adExI)     / sizeof(double);
+const double g_dExIMax = g_adExI[g_nStateI-1] + 0.25; // build above last val
+const double g_adExIMean[] = {0.0}; // unused in select
+const double g_dExISpread = 0.0; // unused in select
+const double g_dExRes = 0.0; // unused in select
+#endif
+#ifdef bExSingle
+const double g_adExIMean[] = {0.0}; // unused in single
+const double g_dExISpread = 0.0; // unused in single
+const double g_dExRes = 0.0; // unused in single
+#endif
+#ifdef bExFullRxn
+const double g_adExIMean[] = {0.0}; // unsed in full rxn
+const double g_dExISpread = 0.0; // unsed in full rxn
+#endif
+const int g_nExIMean = sizeof(g_adExIMean) / sizeof(double); // self adjusting
+#ifndef bGSF_Table
+const int g_nParE1   = sizeof(g_adSigE1)   / sizeof(double);
+const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
+#endif
+const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
+const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
 const double g_dPlotSpMax = 10.0;
@@ -251,43 +288,6 @@ const int g_nEgBin = 500;
 #include "omp.h" // for parallel on shared memory machine (not cluster yet)
 #endif // cint
 #endif // parallel
-
-#ifdef bE2_StdLor
-// Prestwich Physics A Atoms and Nuclei 315, 103-111 (1984)
-const double g_dEneE2 = 63.0 * pow(g_nAMass,-1/3.0);
-const double g_dGamE2 = 6.11 - 0.012 * g_nAMass;
-const double g_dSigE2 = 1.4e-4 * pow(g_nZ,2.0) * g_dEneE2 / (pow(g_nAMass, 1/3.0) * g_dGamE2);
-#endif
-
-const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
-
-#ifdef bExSelect
-const int g_nStateI  = sizeof(g_adExI)     / sizeof(double);
-const double g_dExIMax = g_adExI[g_nStateI-1] + 0.25; // build above last val
-const double g_adExIMean[] = {0.0}; // unused in select
-const double g_dExISpread = 0.0; // unused in select
-const double g_dExRes = 0.0; // unused in select
-#endif
-#ifdef bExSingle
-const double g_adExIMean[] = {0.0}; // unused in single
-const double g_dExISpread = 0.0; // unused in single
-const double g_dExRes = 0.0; // unused in single
-#endif
-#ifdef bExFullRxn
-const double g_adExIMean[] = {0.0}; // unsed in full rxn
-const double g_dExISpread = 0.0; // unsed in full rxn
-#endif
-const int g_nExIMean = sizeof(g_adExIMean) / sizeof(double); // self adjusting
-#ifndef bGSF_Table
-const int g_nParE1   = sizeof(g_adSigE1)   / sizeof(double);
-const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
-#endif
-const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
-const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
-
-const bool g_bIsEvenA = !(g_nAMass % 2);
-const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
-const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////// End Input Parameters ////////////////////////////////////
