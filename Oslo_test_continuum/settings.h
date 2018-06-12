@@ -229,6 +229,12 @@ const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 #define bJIUnderlying // initial population = intrinsic J dist of the nucleus
 //#define bJIPoisson
 //#define bJIGaus
+
+#ifdef bJIUnderlying
+#ifdef bJITruncate // don't populate spins above nJTruncate
+const int g_nJTruncate = 5;
+#endif
+#endif
 #ifdef bJIPoisson
 const double g_dJIMean = 3.5;
 #endif
