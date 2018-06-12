@@ -266,7 +266,8 @@ const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 //#define bJIGaus
 
 #ifdef bJIUnderlying
-#ifdef bJITruncate // don't populate spins above nJTruncate
+#define bJITruncate // don't populate spins above nJTruncate
+#ifdef bJITruncate 
 const int g_nJTruncate = 5;
 #endif
 #endif
