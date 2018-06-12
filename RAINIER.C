@@ -1469,7 +1469,7 @@ void InitFn() {
 
 
   // Histogram over the Underlying J Dist in the continuum
-  double dspStart; // startSpin to plot
+  double dspStart=0; // startSpin to plot
   if(g_bIsEvenA){ dspStart=0; } else { dspStart+=0.5; }
   g_h2JIntrins = new TH2D("h2JIntrins","Underlying J Dist for E>E_crit",
                           g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6+1), 
