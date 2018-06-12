@@ -163,18 +163,58 @@ void AnalyzeTSC(int nDisEx) {
 //////////////////////////// Oslo Analysis /////////////////////////////////////
 void AnalyzeOslo(int exim0 = nExIMean - 1, int real0 = nReal -1) {
   if( (exim0<nExIMean) && (real0<nReal) ) {
-    TCanvas *cExEg = new TCanvas("cExEg","cExEg", 800, 650);
-    cExEg->SetLogz();
-    TH2D *h2ExEg = (TH2D*)fSaveFile->Get(Form("h2ExI%dEg_%d",exim0,real0));
-    h2ExEg->Draw("colz");
-    th22mama(h2ExEg,"ExEg.m");
+    // if bExSpread: Analysis for a specific excitation bin
+    // if bExFullRxn: Already all bins
+    if(exim0>=0) {
+      TCanvas *cExEg = new TCanvas("cExEg","cExEg", 800, 650);
+      cExEg->SetLogz();
+      TH2D *h2ExEg = (TH2D*)fSaveFile->Get(Form("h2ExI%dEg_%d",exim0,real0));
+      h2ExEg->Draw("colz");
+      th22mama(h2ExEg,"ExEg.m");
 
-    TCanvas *c1Gen= new TCanvas("c1Gen","c1Gen", 800, 650);
-    c1Gen->SetLogz();
-    TH2D *h21Gen = (TH2D*)fSaveFile->Get(Form("h2ExI%d1Gen_%d",exim0,real0));
-    h21Gen->Draw("colz");
-    th22mama(h21Gen,"1Gen.m");
-  } else { cout << "Non existent ExIMean or Realization" << endl; }
+      TCanvas *c1Gen= new TCanvas("c1Gen","c1Gen", 800, 650);
+      c1Gen->SetLogz();
+      TH2D *h21Gen = (TH2D*)fSaveFile->Get(Form("h2ExI%d1Gen_%d",exim0,real0));
+      h21Gen->Draw("colz");
+      th22mama(h21Gen,"1Gen.m");
+    }
+    // Analyse Oslo for all excitation energy bins (eg of bExSpread)
+    if(exim0<0) {
+      cout << "AnalyzeOslo: Add spectra off all excitation energies!" << endl;
+      TH2D *h2ExEg;
+      TH2D *h21Gen;
+      for(int iexim = 0; iexim < nExIMean; iexim++){
+          if (iexim==0) {
+            TCanvas *cExEg = new TCanvas("cExEg","cExEg", 800, 650);
+            cExEg->SetLogz();
+            h2ExEg = (TH2D*)fSaveFile->Get(Form("h2ExI%dEg_%d",iexim,real0));
+            h2ExEg->Draw("colz");
+
+            TCanvas *c1Gen= new TCanvas("c1Gen","c1Gen", 800, 650);
+            c1Gen->SetLogz();
+            h21Gen = (TH2D*)fSaveFile->Get(Form("h2ExI%d1Gen_%d",iexim,real0));
+            h21Gen->Draw("colz");
+          }
+          else{
+            TH2D *h2ExEg1 = (TH2D*)fSaveFile->Get(Form("h2ExI%dEg_%d",iexim,real0));
+            h2ExEg1->Draw("colz");
+            h2ExEg->Add(h2ExEg1);
+            h2ExEg->Draw("colz");
+
+            TH2D *h21Gen1 = (TH2D*)fSaveFile->Get(Form("h2ExI%d1Gen_%d",iexim,real0));
+            h21Gen1->Draw("colz");
+            h21Gen->Add(h21Gen1);
+            h21Gen->Draw("colz");
+            // th22mama(h21Gen,"1Gen.m");
+          }
+          if(iexim==nExIMean-1){
+            th22mama(h2ExEg,"ExEg.m");
+            th22mama(h21Gen,"1Gen.m");
+          }
+        }
+      }
+    }
+  else { cout << "Non existent ExIMean or Realization" << endl; }
 } // Oslo
 
 /////////////////////////////// All Populations ////////////////////////////////
