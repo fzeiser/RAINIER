@@ -6,8 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////// Run Settings ////////////////////////////////////////////
-const int g_nReal = 3; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e4; // number of events per realization (and ExI in bExSpread)
+const int g_nReal = 1; // number of realizations of nuclear level scheme
+const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
@@ -32,19 +32,19 @@ const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
 
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
-#define bForceBinNum // else force bin spacing
+//#define bForceBinNum // else force bin spacing
 #ifdef bForceBinNum
 double g_dConESpac; // constructed E bin spacing
 const int g_nConEBin = 400; // number of energy bins in constructed scheme
 #else
-const double g_dConESpac = 0.01; // MeV; wont matter if forcing bin number
+const double g_dConESpac = 0.02; // MeV; wont matter if forcing bin number
 int g_nConEBin;
 #endif // bForceBinNum
 const int g_nConSpbMax = 21; // constructed # spin bins, small for light ion rxn
 
 ///// Level Density, LD, model (Underlying LD) /////
 // choose one, fill in corresponding parameters
-// #define bLD_BSFG // Back Shifted Fermi Gas model
+//#define bLD_BSFG // Back Shifted Fermi Gas model
 #define bLD_CTM // Constant Temperature Model
 //#define bLD_Table // external file with table of values
 //#define bLD_UsrDef // user defined
@@ -57,7 +57,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
 
   #ifdef bLD_CTM
   const double g_dTemp =  0.791; // MeV
-  const double g_dE0   = -0.7; // MeV
+const double g_dE0   =  -0.700; // MeV
   //const double g_dE0   = -1.004 + 0.5 * g_dDeuPair; // MeV; von egidy09 fit
   #endif
   
@@ -79,7 +79,7 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   //#define bLDaEx // a(Ex) = aAsym * (1 + dW * (1 - exp(-Gam * Eff) / dEff) )
   
   #ifdef bLDaConst
-  const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a" 
+  const double g_dLDa = 10.697; // MeV^-1 aka "LD parameter a" 
   #endif
   #ifdef bLDaEx
   const double g_dLDaAsym   = 14.58; // MeV^-1; Asymptotic value, a(Ex->Inf)
@@ -91,10 +91,10 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   // choose one:
   //#define bJCut_VonEgidy05 // low-energy model
   //#define bJCut_SingPart // single particle model
-  // #define bJCut_RigidSph // rigid sphere model
-  // #define bJCut_VonEgidy09 // empirical fit 
+  //#define bJCut_RigidSph // rigid sphere model
+  #define bJCut_VonEgidy09 // empirical fit 
   //#define bJCut_TALYS // TALYS rigid sphere and discrete interpolation
-  #define bJCut_UsrDef // user defined
+  //#define bJCut_UsrDef // user defined
   
   #ifdef bJCut_VonEgidy09
   const double g_dDeuPair = 0.62834; // MeV;
@@ -125,7 +125,7 @@ const double g_dParD = 0.0; // MeV
 // choose one:
 #define bWFD_PTD // fastest version of the Porter Thomas Distribution, nu = 1
 //#define bWFD_nu // set the chi^2 degrees of freedom, nu - slow
-// #define bWFD_Off // no fluctuations - nearly TALYS with level spac fluct
+//#define bWFD_Off // no fluctuations - nearly TALYS with level spac fluct
 #ifdef bWFD_nu
 const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
 // generally not accepted to use
@@ -138,7 +138,7 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   // Parameters from TALYS defaults usually an acceptable start
   ///// fE1 /////
   // choose one:
-  // #define bE1_GenLor // General Lorentzian
+  //#define bE1_GenLor // General Lorentzian
   //#define bE1_EGLO //Enhanced Generalized Lorentzian for A>148; 
   //  -> allow "#define bE1_GenLor" when using #define bE1_EGLO
   //#define bE1_KMF // Kadmenskij Markushev Furman model
@@ -151,7 +151,7 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   //                                  ^^^^ for a 2nd resonance
   
   ///// fM1 /////
-  // #define bM1_StdLor // standard Lorentzian, parameterized by Prestwich
+  //#define bM1_StdLor // standard Lorentzian, parameterized by Prestwich
   //#define bM1_UsrDef // user defined
   //#define bM1StrUpbend // Oslo observed low energy upbend aka enhancement
   const double g_adSigM1[] = { 0.370, 0.00}; // mb magnitude
@@ -163,11 +163,11 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   #endif
   #define bM1_SingPart // single particle
   #ifdef bM1_SingPart
-  const double g_dSpSigM1 = 1e-08; // MeV^-3
+  const double g_dSpSigM1 = 1e-8; // MeV^-3
   #endif
 
   ///// fE2 /////
-  // #define bE2_StdLor // standard Lorentzian, parameterized by Prestwich
+  //#define bE2_StdLor // standard Lorentzian, parameterized by Prestwich
   //#define bE2_UsrDef // user defined
   #define bE2_SingPart // single particle
   #ifdef bE2_SingPart
@@ -195,10 +195,10 @@ const double g_dICCMax = 1.0; // MeV; Uses last Ebin ICC value for higher E
 
 ////////////////////// Excitation Settings /////////////////////////////////////
 // choose one, fill in corresponding params:
-// #define bExSingle  // single population input
+//#define bExSingle  // single population input
 //#define bExSelect // like Beta decay
 #define bExSpread  // ejectile detected input
-// #define bExFullRxn // no ejectile detected input
+//#define bExFullRxn // no ejectile detected input
 
 #ifdef bExSingle // similar to (n,g)
 const double g_dExIMax = 7.8174; // MeV, Ei - "capture state energy"
@@ -223,7 +223,42 @@ const double g_adBRI[]   = {0, 0, 0, 0, 0.014, 0.58, 0.0094, 0.061, 0.0103,
 //populates J according to intrinsic distribution, u can hardcode something else
 const double g_dExIMax = 8.0; // MeV; constructed lvl scheme built up to this
 // dont exceed with init excitations - gaus might sample higher than expected
-const double g_adExIMean[] = {2.0 ,2.2 ,2.4 ,2.6 ,2.8 ,3.0 ,3.2 ,3.4 ,3.6 ,3.8 ,4.0 ,4.2 ,4.4 ,4.6 ,4.8 ,5.0 ,5.2 ,5.4 ,5.6 ,5.8 ,6.0 ,6.2 ,6.4 ,6.6 ,6.8 ,7.0}; // MeV
+const double g_adExIMean[] = {1.  ,  1.02,  1.04,  1.06,  1.08,  1.1 ,  1.12,  1.14,  1.16,
+        1.18,  1.2 ,  1.22,  1.24,  1.26,  1.28,  1.3 ,  1.32,  1.34,
+        1.36,  1.38,  1.4 ,  1.42,  1.44,  1.46,  1.48,  1.5 ,  1.52,
+        1.54,  1.56,  1.58,  1.6 ,  1.62,  1.64,  1.66,  1.68,  1.7 ,
+        1.72,  1.74,  1.76,  1.78,  1.8 ,  1.82,  1.84,  1.86,  1.88,
+        1.9 ,  1.92,  1.94,  1.96,  1.98,  2.  ,  2.02,  2.04,  2.06,
+        2.08,  2.1 ,  2.12,  2.14,  2.16,  2.18,  2.2 ,  2.22,  2.24,
+        2.26,  2.28,  2.3 ,  2.32,  2.34,  2.36,  2.38,  2.4 ,  2.42,
+        2.44,  2.46,  2.48,  2.5 ,  2.52,  2.54,  2.56,  2.58,  2.6 ,
+        2.62,  2.64,  2.66,  2.68,  2.7 ,  2.72,  2.74,  2.76,  2.78,
+        2.8 ,  2.82,  2.84,  2.86,  2.88,  2.9 ,  2.92,  2.94,  2.96,
+        2.98,  3.  ,  3.02,  3.04,  3.06,  3.08,  3.1 ,  3.12,  3.14,
+        3.16,  3.18,  3.2 ,  3.22,  3.24,  3.26,  3.28,  3.3 ,  3.32,
+        3.34,  3.36,  3.38,  3.4 ,  3.42,  3.44,  3.46,  3.48,  3.5 ,
+        3.52,  3.54,  3.56,  3.58,  3.6 ,  3.62,  3.64,  3.66,  3.68,
+        3.7 ,  3.72,  3.74,  3.76,  3.78,  3.8 ,  3.82,  3.84,  3.86,
+        3.88,  3.9 ,  3.92,  3.94,  3.96,  3.98,  4.  ,  4.02,  4.04,
+        4.06,  4.08,  4.1 ,  4.12,  4.14,  4.16,  4.18,  4.2 ,  4.22,
+        4.24,  4.26,  4.28,  4.3 ,  4.32,  4.34,  4.36,  4.38,  4.4 ,
+        4.42,  4.44,  4.46,  4.48,  4.5 ,  4.52,  4.54,  4.56,  4.58,
+        4.6 ,  4.62,  4.64,  4.66,  4.68,  4.7 ,  4.72,  4.74,  4.76,
+        4.78,  4.8 ,  4.82,  4.84,  4.86,  4.88,  4.9 ,  4.92,  4.94,
+        4.96,  4.98,  5.  ,  5.02,  5.04,  5.06,  5.08,  5.1 ,  5.12,
+        5.14,  5.16,  5.18,  5.2 ,  5.22,  5.24,  5.26,  5.28,  5.3 ,
+        5.32,  5.34,  5.36,  5.38,  5.4 ,  5.42,  5.44,  5.46,  5.48,
+        5.5 ,  5.52,  5.54,  5.56,  5.58,  5.6 ,  5.62,  5.64,  5.66,
+        5.68,  5.7 ,  5.72,  5.74,  5.76,  5.78,  5.8 ,  5.82,  5.84,
+        5.86,  5.88,  5.9 ,  5.92,  5.94,  5.96,  5.98,  6.  ,  6.02,
+        6.04,  6.06,  6.08,  6.1 ,  6.12,  6.14,  6.16,  6.18,  6.2 ,
+        6.22,  6.24,  6.26,  6.28,  6.3 ,  6.32,  6.34,  6.36,  6.38,
+        6.4 ,  6.42,  6.44,  6.46,  6.48,  6.5 ,  6.52,  6.54,  6.56,
+        6.58,  6.6 ,  6.62,  6.64,  6.66,  6.68,  6.7 ,  6.72,  6.74,
+        6.76,  6.78,  6.8 ,  6.82,  6.84,  6.86,  6.88,  6.9 ,  6.92,
+        6.94,  6.96,  6.98,  7.  ,  7.02,  7.04,  7.06,  7.08,  7.1 ,
+        7.12,  7.14,  7.16,  7.18,  7.2 ,  7.22,  7.24,  7.26,  7.28,
+        7.3 ,  7.32,  7.34,  7.36,  7.38,  7.4 ,  7.42,  7.44,  7.46,  7.48}; // MeV
 const double g_dExISpread = 0.2 / 2.355; // MeV; std dev sigma = FWHM / 2.355 
 const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 #define bJIUnderlying // initial population = intrinsic J dist of the nucleus
