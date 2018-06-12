@@ -6,8 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////// Run Settings ////////////////////////////////////////////
-const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
+const int g_nReal = 3; // number of realizations of nuclear level scheme
+const int g_nEvent = 1e4; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
