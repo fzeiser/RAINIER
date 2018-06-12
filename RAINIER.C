@@ -1311,6 +1311,9 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
       if(!bJSuggested && (dJPopSum > dRanJPop) ) {
         bJSuggested = true;
         nSpbI = spb;
+        #ifdef bJITruncate // don't populate spins above nJTruncate
+        if(nSpbI > g_nJTruncate ) {bJSuggested=false;} 
+        #endif // bJITruncate
       } // JSuggested
     } // spb
     #endif
