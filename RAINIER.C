@@ -1500,6 +1500,49 @@ void InitFn() {
 
 } // InitFn
 
+
+// Get coninuum bin number for a given excitation energy
+int GetContExBin(double dExcs) {
+  for(int nExI=0; nExI<g_nConEBin; nExI++){
+    if(abs(dExcs-g_adConExCen[nExI]) < g_dConESpac/2){ // if within +-1/2 bin width
+      return nExI;
+    }
+  }
+  return -1; // if no fitting bin was found
+}
+
+// Get total average radiative width
+double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
+  // initalize arrays to pass to GetWidth
+  double *adDisWid;
+  adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
+  double *adConWid; // width to each EJP bin (summed over in-bin lvls)
+  adConWid   = new double  [g_nConEBin * g_nConSpbMax * 2](); // 0 init
+  TRandom2 *arConState; // TRandom2 state for randoms
+  arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
+
+  int nSpcs = int(dSpcs);
+  double dGg = 0;
+  double dSumG = 0;
+
+  int nExBin = GetContExBin(dExcs);
+  int nCS = g_anConLvl[EJP(nExBin,nSpcs,nParcs)]; // #continuum states in a bin
+
+  for(int nlvl=0; nlvl<nCS; nlvl++) { // find Gg of each state in the EJpi bin
+    dGg = GetWidth(nExBin,nSpcs,nParcs,nlvl,nReal,
+                            adConWid,adDisWid,arConState)*1e9;
+    dSumG += dGg;
+    //cout << "Total width of a c.s. level " << nlvl << " is "<< dGg << " meV" << endl;
+  }
+
+  dGg=dSumG/(nCS); // Average radiative width
+  cout<< "Number of states "<< nCS<<endl;
+  cout << "Average total width of the c.s. is " << dGg<< " meV" << endl;
+
+  return dGg;
+}
+
+
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
 TH1D *g_ahDisPop   [g_nReal][g_nExIMean];
 TH1D *g_ahJPop     [g_nReal][g_nExIMean];
