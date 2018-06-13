@@ -1504,7 +1504,7 @@ void InitFn() {
 } // InitFn
 
 
-void GetGG(double dExIcs, int nSpcs, int nParcs, int nReal) {
+void GetGG(double dExcs, int nSpcs, int nParcs, int nReal) {
   double *adDisWid;
   adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
   double *adConWid; // width to each EJP bin (summed over in-bin lvls)
@@ -1514,17 +1514,19 @@ void GetGG(double dExIcs, int nSpcs, int nParcs, int nReal) {
 
 
   // replace hard coded bin of Sn, spin, and parity
+  double dExIcs=0;
 
-  // for loop to go through bin energy, if to pick out the bin with CS states
-  //for(){
-  //if(){
-  //}
-  //}
+  // for loop to go through bin energy, if loop to pick out the bin with CS states
+  for(int nExI=0; nExI<g_nConEBin; nExI++){
+    if(abs(dExcs-g_adConExCen[nExI]) < g_dConESpac/2){
+      dExIcs=nExI;
+    }
+  }
   
 
   int nCS = g_anConLvl[EJP(dExIcs,nSpcs,nParcs)];
   double dGG;
-  //double adG[g_anConLvl[EJP(264,0,1)]];
+  //double adG[g_anConLvl[EJP(264,0,1)]]; //for 93Sr cs of Bn=5.288 MeV SP=0.5 Parity=+
   double adG[nCS];
   double dSumG=0;
 
