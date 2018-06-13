@@ -42,6 +42,8 @@ Run following line in bash
 
       root -l RAINIER.C++
 
+* Note: The `settings.h` file in the RAINIER folder is just a symlink to `sample_folder`
+
 * If the environment variable RAINIER_PATH if not set, RAINIER will be executed, but the analysis script is not loaded. The error message will look like
 
     ```
