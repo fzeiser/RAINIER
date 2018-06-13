@@ -1540,6 +1540,7 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
 
   dGg=dSumG/(nCS); // Average radiative width
 
+
   //Standard deviation
   double dSumSq=0;
   for(int nlvl=0; nlvl<nCS; nlvl++) {
@@ -1557,6 +1558,33 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
 
   return dGg;
 }
+
+
+
+ // Get average neutron resonance spacing D0 for s-wave neutorn capture
+double GetD0(double dEx, double dSp, int nPar) {
+  // dEx is the neutron separation energy
+  // dSp is the target spin
+  // nPar is the target parity
+
+  double rhoH = GetDensity(dEx, dSp+0.5, nPar);
+  double rhoL = GetDensity(dEx, dSp-0.5, nPar);
+
+  double D0_LD = 1/(rhoH+rhoL)*1e6; // units of eV
+
+  double rho_real = g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] / g_dConESpac;
+  if(dSp>0){
+    rho_real += g_anConLvl[EJP(GetContExBin(dEx),dSp-0.5,nPar)] / g_dConESpac;
+  }
+  double D0_real= 1/rho_real *1e6; // units of eV
+
+  cout<<" s-wave neutron-capture resonance spacing, D0: "<< D0_LD<<" eV"<<endl;
+  cout<<" s-wave neutron-capture resonance spacing, D0 with Fluct! : "<< D0_real<<" eV"<<endl; 
+  cout<< "#States in bin(s): " << g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] << endl;
+  
+  return D0_LD;
+}
+
 
 
 
