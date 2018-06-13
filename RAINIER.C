@@ -395,8 +395,6 @@ double GetDensity(double dEx, double dSp, int nPar) {
   return dDenEJP;
 } // plot with: TF2 *fDen2 = new TF2("fDen2","GetDensity(y,x,1)",0,9,0,16); fDen2->Draw("colz")
 
-
-
 //////////////////// Build Nucleus /////////////////////////////////////////////
 // spins marked with postscript "b" refer to "bin": necessary for half-int spins
 // not to be confused with boolean type prescript "b"
@@ -1541,41 +1539,23 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
   }
 
   dGg=dSumG/(nCS); // Average radiative width
+
+  //Standard deviation
+  double dSumSq=0;
+  for(int nlvl=0; nlvl<nCS; nlvl++) {
+    dSumSq=dSumSq+pow(dGg-GetWidth(nExBin,nSpcs,nParcs,nlvl,nReal,
+				   adConWid,adDisWid,arConState)*1e9,2);
+  }
+  
+  double dsigGg = pow(dSumSq/(nCS-1),0.5);
+  
+  cout<< "Number of states "<< nCS<<endl;
+  cout << "Average total width of the c.s. is " << dGg<<" +/- "<< dsigGg<< " meV" << endl;
+
   cout<< "Number of states "<< nCS<<endl;
   cout << "Average total width of the c.s. is " << dGg<< " meV" << endl;
 
   return dGg;
-}
-
-// Get average neutron resonance spacing D0 for s-wave neutorn capture
-double GetD0(double dEx, double dSp, int nPar) {
-  // dEx is the neutron separation energy
-  // dSp is the target spin
-  // nPar is the target parity
-
-  double *adDisWid;
-  adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
-  double *adConWid; // width to each EJP bin (summed over in-bin lvls)
-  adConWid   = new double  [g_nConEBin * g_nConSpbMax * 2](); // 0 init
-  TRandom2 *arConState; // TRandom2 state for randoms
-  arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
-  
-  GetWidth(0,0,0,0,0,
-	   adConWid,adDisWid,arConState);
-
-  double rhoH = GetDensity(dEx, dSp+0.5, nPar);
-  double rhoL = GetDensity(dEx, dSp-0.5, nPar);
-
-  double D0_LD = 1/(rhoH+rhoL)*1e6; // units of eV
-
-  double D0_fluct= 1/(EJP(GetContExBin(dEx),dSp+0.5,nPar)/g_dConESpac)*1e6;
-  
-
-  cout<<" s-wave neutron-capture resonance spacing, D0: "<< D0_LD<<" eV"<<endl;
-  cout<<" s-wave neutron-capture resonance spacing, D0 with Fluct! : "<< D0_fluct<<" eV"<<endl; 
-
-  return D0_LD;
-  
 }
 
 
