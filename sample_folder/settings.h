@@ -10,17 +10,6 @@ const int g_nReal = 1; // number of realizations of nuclear level scheme
 const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
-////////////////////// Analysis Settings ///////////////////////////////////////
-const double g_dPlotSpMax = 10.0;
-const int nExJBin = 100;  // n Ex Bins for plotting underlying J
-///// JPop Analysis /////
-//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
-const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
-///// DRTSC Analysis
-//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
-const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
-const int g_nEgBin = 500;
-
 ////////////////////// Discrete Settings ///////////////////////////////////////
 //#define bPrintLvl // print both discrete and constructed lvl schemes
 const int g_nZ = 60; // proton number
@@ -28,7 +17,8 @@ const int g_nAMass = 144; // proton + neutron number
 const int g_nDisLvlMax = 16; // only trust level scheme to here, sets ECrit
 
 const bool g_bIsEvenA = !(g_nAMass % 2);
-const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
+const int g_nDisLvlGamMax = 15; // max #gammas read for a discrete lvl from file
+                                // suggestion: g_nDisLvlMax
 
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
@@ -269,6 +259,20 @@ const int g_nExIMean = sizeof(g_adExIMean) / sizeof(double); // self adjusting
 const int g_nParE1   = sizeof(g_adSigE1)   / sizeof(double);
 const int g_nParM1   = sizeof(g_adSigM1)   / sizeof(double);
 #endif
+
+////////////////////// Plot Settings (see Analysis script) //////////////////////
+// note: irrelevant, unless you use these functions
+const double g_dPlotSpMax = 10.0; // max spin to plot on histograms
+const int nExJBin = 100;  // n Ex Bins for plotting underlying J
+///// JPop Analysis /////
+// Compares intensities of specified levels in the function AnalyzeJPop()
+//const int g_anPopLvl[] = {4,6,8,10,7,9};// low-ly populated lvls,0 = gs //56Fe
+const int g_anPopLvl[] = {13,8,14,10,6,11}; // 144Nd
+///// DRTSC Analysis
+//const int g_anDRTSC[] = {1,3,5,8,12,13,15}; // 56Fe
+const int g_anDRTSC[] = {1,4,6,15}; // 144Nd
+const int g_nEgBin = 500;
+
 const int g_nPopLvl  = sizeof(g_anPopLvl)  / sizeof(int);
 const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 
