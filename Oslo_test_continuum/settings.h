@@ -7,7 +7,7 @@
 
 ////////////////////// Run Settings ////////////////////////////////////////////
 const int g_nReal = 1; // number of realizations of nuclear level scheme
-const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
+const int g_nEvent = 1e4; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
 
 ////////////////////// Analysis Settings ///////////////////////////////////////
@@ -25,7 +25,7 @@ const int g_nEgBin = 500;
 //#define bPrintLvl // print both discrete and constructed lvl schemes
 const int g_nZ = 38; // proton number
 const int g_nAMass = 93; // proton + neutron number
-const int g_nDisLvlMax = 1; // only trust level scheme to here, sets ECrit
+const int g_nDisLvlMax = 14; // only trust level scheme to here, sets ECrit
 
 const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max gammas in for a discrete lvl
@@ -223,6 +223,7 @@ const double g_adBRI[]   = {0, 0, 0, 0, 0.014, 0.58, 0.0094, 0.061, 0.0103,
 //populates J according to intrinsic distribution, u can hardcode something else
 const double g_dExIMax = 8.0; // MeV; constructed lvl scheme built up to this
 // dont exceed with init excitations - gaus might sample higher than expected
+/*
 const double g_adExIMean[] = {1.  ,  1.02,  1.04,  1.06,  1.08,  1.1 ,  1.12,  1.14,  1.16,
         1.18,  1.2 ,  1.22,  1.24,  1.26,  1.28,  1.3 ,  1.32,  1.34,
         1.36,  1.38,  1.4 ,  1.42,  1.44,  1.46,  1.48,  1.5 ,  1.52,
@@ -259,6 +260,36 @@ const double g_adExIMean[] = {1.  ,  1.02,  1.04,  1.06,  1.08,  1.1 ,  1.12,  1
         6.94,  6.96,  6.98,  7.  ,  7.02,  7.04,  7.06,  7.08,  7.1 ,
         7.12,  7.14,  7.16,  7.18,  7.2 ,  7.22,  7.24,  7.26,  7.28,
         7.3 ,  7.32,  7.34,  7.36,  7.38,  7.4 ,  7.42,  7.44,  7.46,  7.48}; // MeV
+*/
+const double g_adExIMean[] = {2.4 ,  2.42,
+        2.44,  2.46,  2.48,  2.5 ,  2.52,  2.54,  2.56,  2.58,  2.6 ,
+        2.62,  2.64,  2.66,  2.68,  2.7 ,  2.72,  2.74,  2.76,  2.78,
+        2.8 ,  2.82,  2.84,  2.86,  2.88,  2.9 ,  2.92,  2.94,  2.96,
+        2.98,  3.  ,  3.02,  3.04,  3.06,  3.08,  3.1 ,  3.12,  3.14,
+        3.16,  3.18,  3.2 ,  3.22,  3.24,  3.26,  3.28,  3.3 ,  3.32,
+        3.34,  3.36,  3.38,  3.4 ,  3.42,  3.44,  3.46,  3.48,  3.5 ,
+        3.52,  3.54,  3.56,  3.58,  3.6 ,  3.62,  3.64,  3.66,  3.68,
+        3.7 ,  3.72,  3.74,  3.76,  3.78,  3.8 ,  3.82,  3.84,  3.86,
+        3.88,  3.9 ,  3.92,  3.94,  3.96,  3.98,  4.  ,  4.02,  4.04,
+        4.06,  4.08,  4.1 ,  4.12,  4.14,  4.16,  4.18,  4.2 ,  4.22,
+        4.24,  4.26,  4.28,  4.3 ,  4.32,  4.34,  4.36,  4.38,  4.4 ,
+        4.42,  4.44,  4.46,  4.48,  4.5 ,  4.52,  4.54,  4.56,  4.58,
+        4.6 ,  4.62,  4.64,  4.66,  4.68,  4.7 ,  4.72,  4.74,  4.76,
+        4.78,  4.8 ,  4.82,  4.84,  4.86,  4.88,  4.9 ,  4.92,  4.94,
+        4.96,  4.98,  5.  ,  5.02,  5.04,  5.06,  5.08,  5.1 ,  5.12,
+        5.14,  5.16,  5.18,  5.2 ,  5.22,  5.24,  5.26,  5.28,  5.3 ,
+        5.32,  5.34,  5.36,  5.38,  5.4 ,  5.42,  5.44,  5.46,  5.48,
+        5.5 ,  5.52,  5.54,  5.56,  5.58,  5.6 ,  5.62,  5.64,  5.66,
+        5.68,  5.7 ,  5.72,  5.74,  5.76,  5.78,  5.8 ,  5.82,  5.84,
+        5.86,  5.88,  5.9 ,  5.92,  5.94,  5.96,  5.98,  6.  ,  6.02,
+        6.04,  6.06,  6.08,  6.1 ,  6.12,  6.14,  6.16,  6.18,  6.2 ,
+        6.22,  6.24,  6.26,  6.28,  6.3 ,  6.32,  6.34,  6.36,  6.38,
+        6.4 ,  6.42,  6.44,  6.46,  6.48,  6.5 ,  6.52,  6.54,  6.56,
+        6.58,  6.6 ,  6.62,  6.64,  6.66,  6.68,  6.7 ,  6.72,  6.74,
+        6.76,  6.78,  6.8 ,  6.82,  6.84,  6.86,  6.88,  6.9 ,  6.92,
+        6.94,  6.96,  6.98,  7.  ,  7.02,  7.04,  7.06,  7.08,  7.1 ,
+        7.12,  7.14,  7.16,  7.18,  7.2 ,  7.22,  7.24,  7.26,  7.28,
+        7.3 ,  7.32,  7.34,  7.36,  7.38,  7.4 ,  7.42,  7.44,  7.46,  7.48}; // MeV
 const double g_dExISpread = 0.2 / 2.355; // MeV; std dev sigma = FWHM / 2.355 
 const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 #define bJIUnderlying // initial population = intrinsic J dist of the nucleus
@@ -266,7 +297,7 @@ const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 //#define bJIGaus
 
 #ifdef bJIUnderlying
-#define bJITruncate // don't populate spins above nJTruncate
+//#define bJITruncate // don't populate spins above nJTruncate
 #ifdef bJITruncate 
 const int g_nJTruncate = 5;
 #endif
