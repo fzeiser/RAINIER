@@ -1553,29 +1553,22 @@ double GetD0(double dEx, double dSp, int nPar) {
   // dSp is the target spin
   // nPar is the target parity
 
-  double *adDisWid;
-  adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
-  double *adConWid; // width to each EJP bin (summed over in-bin lvls)
-  adConWid   = new double  [g_nConEBin * g_nConSpbMax * 2](); // 0 init
-  TRandom2 *arConState; // TRandom2 state for randoms
-  arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
-  
-  GetWidth(0,0,0,0,0,
-	   adConWid,adDisWid,arConState);
-
   double rhoH = GetDensity(dEx, dSp+0.5, nPar);
   double rhoL = GetDensity(dEx, dSp-0.5, nPar);
 
   double D0_LD = 1/(rhoH+rhoL)*1e6; // units of eV
 
-  double D0_fluct= 1/(EJP(GetContExBin(dEx),dSp+0.5,nPar)/g_dConESpac)*1e6;
-  
+  double rho_real = g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] / g_dConESpac;
+  if(dSp>0){
+    rho_real += g_anConLvl[EJP(GetContExBin(dEx),dSp-0.5,nPar)] / g_dConESpac;
+  }
+  double D0_real= 1/rho_real *1e6; // units of eV
 
   cout<<" s-wave neutron-capture resonance spacing, D0: "<< D0_LD<<" eV"<<endl;
-  cout<<" s-wave neutron-capture resonance spacing, D0 with Fluct! : "<< D0_fluct<<" eV"<<endl; 
-
-  return D0_LD;
+  cout<<" s-wave neutron-capture resonance spacing, D0 with Fluct! : "<< D0_real<<" eV"<<endl; 
+  cout<< "#States in bin(s): " << g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] << endl;
   
+  return D0_LD;
 }
 
 
