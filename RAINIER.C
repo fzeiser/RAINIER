@@ -1503,6 +1503,47 @@ void InitFn() {
 
 } // InitFn
 
+
+void GetGG(double dExIcs, int nSpcs, int nParcs, int nReal) {
+  double *adDisWid;
+  adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
+  double *adConWid; // width to each EJP bin (summed over in-bin lvls)
+  adConWid   = new double  [g_nConEBin * g_nConSpbMax * 2](); // 0 init
+  TRandom2 *arConState; // TRandom2 state for randoms
+  arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
+
+
+  // replace hard coded bin of Sn, spin, and parity
+
+  // for loop to go through bin energy, if to pick out the bin with CS states
+  //for(){
+  //if(){
+  //}
+  //}
+  
+
+  int nCS = g_anConLvl[EJP(dExIcs,nSpcs,nParcs)];
+  double dGG;
+  //double adG[g_anConLvl[EJP(264,0,1)]];
+  double adG[nCS];
+  double dSumG=0;
+
+  
+  for(int nlvl=0; nlvl<nCS; nlvl++) {
+    adG[nlvl]=GetWidth(dExIcs,nSpcs,nParcs,nlvl,nReal,adConWid,adDisWid,arConState)*1e9;
+    dSumG=dSumG+adG[nlvl];
+    cout << "Total width of a c.s. level " << nlvl<< " is "<< adG[nlvl]<< " meV" << endl;
+    
+  }
+
+  dGG=dSumG/(nCS);
+  cout<< "Number of states "<< nCS<<endl;
+  cout << "Average total width of the c.s. is " << dGG<< " meV" << endl;
+  
+}
+
+
+
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
 TH1D *g_ahDisPop   [g_nReal][g_nExIMean];
 TH1D *g_ahJPop     [g_nReal][g_nExIMean];
