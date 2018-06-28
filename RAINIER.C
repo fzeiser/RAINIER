@@ -56,6 +56,7 @@ using namespace std;
 #include <TROOT.h>
 #include "TF1.h"
 #include "TF2.h"
+#include <vector>
 // determine OS for briccs
 #ifdef __linux__
 char cbriccs[] = "briccs";
@@ -1511,8 +1512,21 @@ int GetContExBin(double dExcs) {
   return -1; // if no fitting bin was found
 }
 
-// Get total average radiative width
-double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
+// Get mean and standard deviation of values in a vector v
+// here, var^2 0 = (x0^2-x^2)/n, so without "bessel correction"
+vector<double> GetMeanAndStdev(vector<double> &v) {
+  double sum = std::accumulate(v.begin(), v.end(), 0.0);
+  double mean = sum / v.size();
+  std::vector<double> diff(v.size());
+  std::transform(v.begin(), v.end(), diff.begin(), [mean](double x) { return x - mean; });
+  double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+  double stdev = std::sqrt(sq_sum / v.size());
+  vector<double> meanAndStdev {mean, stdev};
+  return meanAndStdev;
+}
+
+// Get average total radiative width
+double GetGg(double dExcs, double dSpcs, int nParcs, int nReal, int nBins=1) {
   // initalize arrays to pass to GetWidth
   double *adDisWid;
   adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
@@ -1522,24 +1536,33 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal) {
   arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
 
   int nSpcs = int(dSpcs);
-  double dGg = 0;
-  double dSumG = 0;
-
   int nExBin = GetContExBin(dExcs);
-  int nCS = g_anConLvl[EJP(nExBin,nSpcs,nParcs)]; // #continuum states in a bin
+  int nCSsum = 0;
+  double dGg = 0;
+  for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
+    nCSsum += g_anConLvl[EJP(nExb,nSpcs,nParcs)]; // + #continuum states in a bin
+  }
+  vector<double> vGg;
+  vGg.reserve(nCSsum);
 
-  for(int nlvl=0; nlvl<nCS; nlvl++) { // find Gg of each state in the EJpi bin
-    dGg = GetWidth(nExBin,nSpcs,nParcs,nlvl,nReal,
-                            adConWid,adDisWid,arConState)*1e9;
-    dSumG += dGg;
-    //cout << "Total width of a c.s. level " << nlvl << " is "<< dGg << " meV" << endl;
+  for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
+    int nCS = g_anConLvl[EJP(nExb,nSpcs,nParcs)]; // #continuum states in a bin
+    for(int nlvl=0; nlvl<nCS; nlvl++) { // find Gg of each state in the EJpi bin
+      dGg = GetWidth(nExBin,nSpcs,nParcs,nlvl,nReal,
+                              adConWid,adDisWid,arConState)*1e9;
+      vGg.push_back(dGg);
+      //cout << "Total width of a c.s. level " << nlvl << " is "<< dGg << " meV" << endl;
+    }
   }
 
-  dGg=dSumG/(nCS); // Average radiative width
-  cout<< "Number of states "<< nCS<<endl;
-  cout << "Average total width of the c.s. is " << dGg<< " meV" << endl;
+  vector<double> vGgMeanAndStdev = GetMeanAndStdev(vGg);
+  double dGgMean  = vGgMeanAndStdev[0];
+  double dGgStdev = vGgMeanAndStdev[1];
 
-  return dGg;
+  cout<< "Number of states "<< nCSsum << " from " << nBins << " continuum bins; S_n +- Ex: " << nBins*g_dConESpac << endl;
+  cout << "Average total width of the c.s. is " << dGgMean<< " meV" << " +- " << dGgStdev << endl;
+
+  return dGgMean;
 }
 
 
