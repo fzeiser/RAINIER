@@ -1574,6 +1574,10 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
   // nPar is the target parity
   // nBins is #Ex-bins to calc D0 from
 
+  double rhoH = GetDensity(dEx, dSp+0.5, nPar);
+  double rhoL = GetDensity(dEx, dSp-0.5, nPar);
+  double D0_th_exact = 1./ ((rhoH+rhoL)/nBins)*1e6; // units of eV
+
   double rho_th = 0;
   double rho_real = 0;
   int nLevelsSum = 0;
@@ -1582,8 +1586,8 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
   for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
     dEx = g_adConExCen[nExb];
 
-    double rhoH = GetDensity(dEx, dSp+0.5, nPar);
-    double rhoL = GetDensity(dEx, dSp-0.5, nPar);
+    rhoH = GetDensity(dEx, dSp+0.5, nPar);
+    rhoL = GetDensity(dEx, dSp-0.5, nPar);
     rho_th += rhoH + rhoL;
 
     rho_real += g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] / g_dConESpac;
@@ -1596,6 +1600,7 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
   double D0_th = 1./(rho_th/nBins)*1e6; // units of eV
   double D0_real= 1./(rho_real/nBins) *1e6; // units of eV
 
+  cout<<" s-wave neutron-capture resonance spacing, D0, from model, Ex exact: "<< D0_th_exact <<" eV"<<endl;
   cout<<" s-wave neutron-capture resonance spacing, D0, from model: "<< D0_th <<" eV"<<endl;
   cout<<" s-wave neutron-capture resonance spacing, D0, form realiation: "<< D0_real <<" eV"<<endl; 
   cout<< "#States in bin(s): " << nLevelsSum << " from " << nBins << " continuum bins; Ex +- dEx: " << nBins*g_dConESpac << endl;;
