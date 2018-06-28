@@ -1566,6 +1566,45 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal, int nBins=1) {
 }
 
 
+// Get average neutron resonance spacing D0 for s-wave neutorn capture
+// note: For now this will be for the latest realization
+double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
+  // dEx is the excitation energy (should be @Sn)
+  // dSp is the target spin
+  // nPar is the target parity
+  // nBins is #Ex-bins to calc D0 from
+
+  double rho_th = 0;
+  double rho_real = 0;
+  int nLevelsSum = 0;
+
+  int nExBin = GetContExBin(dEx);
+  for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
+    dEx = g_adConExCen[nExb];
+
+    double rhoH = GetDensity(dEx, dSp+0.5, nPar);
+    double rhoL = GetDensity(dEx, dSp-0.5, nPar);
+    rho_th += rhoH + rhoL;
+
+    rho_real += g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)] / g_dConESpac;
+    nLevelsSum += g_anConLvl[EJP(GetContExBin(dEx),dSp+0.5,nPar)];
+    if(dSp>0){
+      rho_real += g_anConLvl[EJP(GetContExBin(dEx),dSp-0.5,nPar)] / g_dConESpac;
+      nLevelsSum += g_anConLvl[EJP(GetContExBin(dEx),dSp-0.5,nPar)];
+    }
+  }
+  double D0_th = 1./(rho_th/nBins)*1e6; // units of eV
+  double D0_real= 1./(rho_real/nBins) *1e6; // units of eV
+
+  cout<<" s-wave neutron-capture resonance spacing, D0, from model: "<< D0_th <<" eV"<<endl;
+  cout<<" s-wave neutron-capture resonance spacing, D0, form realiation: "<< D0_real <<" eV"<<endl; 
+  cout<< "#States in bin(s): " << nLevelsSum << " from " << nBins << " continuum bins; Ex +- dEx: " << nBins*g_dConESpac << endl;;
+  
+  return D0_real;
+}
+
+
+
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
 TH1D *g_ahDisPop   [g_nReal][g_nExIMean];
 TH1D *g_ahJPop     [g_nReal][g_nExIMean];
