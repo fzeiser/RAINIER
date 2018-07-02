@@ -1576,7 +1576,7 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
 
   double rhoH = GetDensity(dEx, dSp+0.5, nPar);
   double rhoL = GetDensity(dEx, dSp-0.5, nPar);
-  double D0_th_exact = 1./ ((rhoH+rhoL)/nBins)*1e6; // units of eV
+  double D0_th_exact = 1./ (rhoH+rhoL)*1e6; // units of eV
 
   double rho_th = 0;
   double rho_real = 0;
