@@ -40,6 +40,8 @@
 #include <sstream>
 #include <stdlib.h>
 #include <iomanip> 
+#include <vector>
+#include <numeric>
 #include "math.h"
 #include "TTimeStamp.h"
 using namespace std;
@@ -56,7 +58,6 @@ using namespace std;
 #include <TROOT.h>
 #include "TF1.h"
 #include "TF2.h"
-#include <vector>
 // determine OS for briccs
 #ifdef __linux__
 char cbriccs[] = "briccs";
