@@ -1276,7 +1276,16 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
       nParI = g_anParI[state];
       nDisEx = g_nDisLvlMax;
       nLvlInBinI = 0;
-      break;
+      // For now: assuming selection rules dJ = dPi = 0!
+      int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
+      if(nLvlAvail>0) {
+        break;
+      }
+      else { 
+        cerr << "\n" << "err: No level to populate for Ex=" << dExI
+        << "\n check spin-parity of generated continuum level vs population from bExSelect" 
+        << endl;
+      }
     } // BR > RanState
   } // state
   #endif
