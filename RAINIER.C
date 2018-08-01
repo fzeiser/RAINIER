@@ -1276,6 +1276,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
       nParI = g_anParI[state];
       nDisEx = g_nDisLvlMax;
       nLvlInBinI = 0;
+      break;
     } // BR > RanState
   } // state
   #endif
