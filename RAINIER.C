@@ -1310,10 +1310,10 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
       else { // is continuum level
         nExI = round( (dExI - g_dECrit) / g_dConESpac );
         nDisEx = g_nDisLvlMax; //dummy
-        nLvlInBinI = 0;
         // For now: assuming selection rules dJ = dPi = 0!
         int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
         if(nLvlAvail>0) {
+          nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
           break; // states
         }
         else { 
