@@ -197,16 +197,10 @@ const double g_dParI   = 0; // Pi - "capture state parity" 0=(-), 1=(+)
 #endif
 
 #ifdef bExSelect // similar to Beta decay
-const double g_adExI[] = {0, 0.88489, 1.78662, 2.69324, 2.89503, 3.0383, 3.3418,
-  3.47668, 3.59912, 3.78828, 3.8483, 3.9039, 4.0016, 4.06142, 4.2646, 4.30903, 
-  4.46481, 4.5144, 4.5583, 4.5889, 4.7101, 4.7917, 4.8492, 5.0613}; // MeV
-const double g_adSpI[]  = {0, 2, 4, 4, 6, 5, 3, 5, 6, 6, 5, 5, 6, 5, 6, 5, 7, 6,
-  5, 7, 7, 5, 5, 5}; // hbar
-const double g_anParI[] = {1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1,
-  1, 0, 0, 1, 1, 0}; // Pi
-const double g_adBRI[]   = {0, 0, 0, 0, 0.014, 0.58, 0.0094, 0.061, 0.0103, 
-  0.0325, 0.049, 0.0057, 0.0074, 0.0141, 0.0216, 0.0236, 0.0415, 0.0135, 0.0298,
-  0.014, 0.0104, 0.0057, 0.0519, 0.005}; // Branching Ratio: sums to 1.0
+const double g_adExI[] = {0,  2.09328, 4.0016, 5.0613}; // MeV
+const double g_adSpI[]  = {0, 5, 5, 3}; // hbar
+const double g_anParI[] = {1, 0, 1, 1}; // Pi
+const double g_adBRI[]   = {0, 0.1, 0.2, 0.7}; // Branching Ratio: has to sum up to 1.0
 #endif
 
 #ifdef bExSpread // similar to (p,p'), (a,a'), (he3,a'), etc.

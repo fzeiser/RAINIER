@@ -1243,6 +1243,16 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
   return true;
 } // TakeStep
 
+///////////////// Get coninuum bin number for a given excitation energy ////////////
+int GetContExBin(double dExcs) {
+  for(int nExI=0; nExI<g_nConEBin; nExI++){
+    if(abs(dExcs-g_adConExCen[nExI]) < g_dConESpac/2){ // if within +-1/2 bin width
+      return nExI;
+    }
+  }
+  return -1; // if no fitting bin was found
+}
+
 ///////////////////////// Initial Excitation ///////////////////////////////////
 void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   TRandom2 &ranEv, double dExIMean, double dExISpread) {
@@ -1271,21 +1281,47 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
     dBRSum += g_adBRI[state];
     if(dBRSum > dRanState) {
       double dExI = g_adExI[state];
-      nExI = round( (dExI - g_dECrit) / g_dConESpac ); 
       nSpbI = int(g_adSpI[state]);
       nParI = g_anParI[state];
-      nDisEx = g_nDisLvlMax;
-      nLvlInBinI = 0;
-      // For now: assuming selection rules dJ = dPi = 0!
-      int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
-      if(nLvlAvail>0) {
-        break;
-      }
-      else { 
-        cerr << "\n" << "err: No level to populate for Ex=" << dExI
-        << "\n check spin-parity of generated continuum level vs population from bExSelect" 
-        << endl;
-      }
+
+      // check wether level exists
+      if(dExI < g_dECrit + 0.001) { // is discrete
+        // need to be very careful of doublets and precision
+        nExI = -1;
+        bool bDisBinFound = false;
+        for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
+          double dLvlE = g_adDisEne[lvl];
+          if(TMath::Abs(dExI - dLvlE) < 0.001) {
+            nDisEx = lvl;
+            if (nSpbI == g_adDisSp[nDisEx] && nParI == g_anDisPar[nDisEx]) {
+              bDisBinFound = true;
+              break; // dis lvl
+            }
+          } // match E
+        } // lvl
+        if( !bDisBinFound ) cerr << "err: no discrete match @ " << dExI 
+                                 << " MeV, J/pi= " << nSpbI << "," << nParI << endl;
+        if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
+        else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
+        nParI = g_anDisPar[nDisEx];
+        nLvlInBinI = 0;
+        break; // state
+      } // discrete
+      else { // is continuum level
+        nExI = round( (dExI - g_dECrit) / g_dConESpac );
+        nDisEx = g_nDisLvlMax; //dummy
+        nLvlInBinI = 0;
+        // For now: assuming selection rules dJ = dPi = 0!
+        int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
+        if(nLvlAvail>0) {
+          break; // states
+        }
+        else { 
+          cerr << "\n" << "err: No level to populate for Ex=" << dExI
+          << "\n check spin-parity of generated continuum level vs population from bExSelect" 
+          << endl;
+        } 
+      } // continuum
     } // BR > RanState
   } // state
   #endif
@@ -1511,17 +1547,6 @@ void InitFn() {
   }
 
 } // InitFn
-
-
-// Get coninuum bin number for a given excitation energy
-int GetContExBin(double dExcs) {
-  for(int nExI=0; nExI<g_nConEBin; nExI++){
-    if(abs(dExcs-g_adConExCen[nExI]) < g_dConESpac/2){ // if within +-1/2 bin width
-      return nExI;
-    }
-  }
-  return -1; // if no fitting bin was found
-}
 
 // Get mean and standard deviation of values in a vector v
 // here, var^2 0 = (x0^2-x^2)/n, so without "bessel correction"
