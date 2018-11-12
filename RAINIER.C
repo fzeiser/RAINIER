@@ -58,6 +58,8 @@ using namespace std;
 #include <TROOT.h>
 #include "TF1.h"
 #include "TF2.h"
+#include "TTree.h"
+#include <vector>
 // determine OS for briccs
 #ifdef __linux__
 char cbriccs[] = "briccs";
@@ -118,6 +120,7 @@ void ReadDisInputFile() {
     if(nLvlPar == -1) nLvlPar = 0; // 1=+, 0=- diff convention dicebox and talys
     if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch" << endl; 
     if(int(dLvlT12) == dLvlT12) {
+
       // sometimes no halflife meas
       nLvlGam = dLvlT12; // missing half-life
       dLvlT12 = 999; 
@@ -1659,6 +1662,17 @@ TH1D *g_ahICSpec   [g_nReal][g_nExIMean];
 TH2D *g_ah2PopI    [g_nReal][g_nExIMean];
 TGraph *g_grTotWidAvg       [g_nExIMean];
 
+
+#ifdef bSaveTree
+// to save data to trees
+vector<Double_t> v_dEgs_save; // emitted gamma rays
+double dExI_save; // initial excitation energy
+double nJI_save; // initial spin (for uneven A: J=J-0.5)
+double nPar_save; // initial parity (0 or 1: see elsewhere)
+double real_save; // realization
+vector<Double_t> v_dTimeToLvls_save; // decay time until this level
+#endif // bSaveTree
+
 /******************************************************************************/
 /**************************** MAIN LOOP ***************************************/
 /******************************************************************************/
@@ -1686,6 +1700,15 @@ void RAINIER(int g_nRunNum = 1) {
     g_grTotWidAvg[exim] = new TGraph(g_nReal); // bench
   }
 
+  #ifdef bSaveTree
+  TTree *tree = new TTree("tree","RAINIER cascades tree");
+  tree->Branch("Egs",&v_dEgs_save);
+  tree->Branch("ExI",&dExI_save, "dExI_save/D");
+  tree->Branch("JI_int",&nJI_save, "nJI_save/I");
+  tree->Branch("nPar",&nPar_save, "nPar_save/I");
+  tree->Branch("dTimeToLvls",&v_dTimeToLvls_save);
+  #endif // bSaveTree
+
   ///////// Realization Loop /////////
   for(int real=0; real<g_nReal; real++) {
     BuildConstructed(real); 
@@ -1693,6 +1716,12 @@ void RAINIER(int g_nRunNum = 1) {
     PrintConLvl();
     #endif
     cout << "Realization " << real << endl;
+
+    #ifdef bSaveTree
+    if(g_nReal>1){
+      tree->Branch("realiation",&real_save,"real_save/I");
+    }
+    #endif // bSaveTree
 
     ///////// Initial Excitation loop /////////
     for(int exim=0; exim<g_nExIMean; exim++) {
@@ -1802,8 +1831,8 @@ void RAINIER(int g_nRunNum = 1) {
       #endif
 
       #ifdef bParallel
-      #pragma omp parallel // if resize cmd window while running - will stall
-      #endif
+      #pragma omp parallel// if resize cmd window while running - will stall
+      #endif // parallel
       { // each active processor gets an allocated array
         // dont have to renew with each event
         //double adDisWid[g_nDisLvlMax]; // width to each discrete level
@@ -1856,6 +1885,10 @@ void RAINIER(int g_nRunNum = 1) {
           bool bIsAlive = true;
           double dEg1 = 0.0, dEg2 = 0.0; // steps for TSC
           bool bHadEle = false;
+          #ifdef bSaveTree
+          vector<Double_t> v_dEgs;
+          vector<Double_t> v_dTimeToLvls;
+          #endif // bSaveTree
           /////// Decay till ground state ////////
           while(nDisEx > 0 && bIsAlive) { // nDisEx > g.s. (i.e. excited)
             // bIsAlive: could get stuck in constructed high spin state and have
@@ -1947,7 +1980,10 @@ void RAINIER(int g_nRunNum = 1) {
               }
 
               double dEg = dExPre - dExPost;
-
+              #ifdef bSaveTree
+              v_dEgs.push_back(dEg);
+              v_dTimeToLvls.push_back(dTimeToLvl);
+              #endif // bSaveTree
               ///// Internal Conversion /////
               double dICC = GetICC(dEg,nTransMade,dMixDelta2);
               double dProbEle = dICC / (1.0 + dICC);
@@ -1996,6 +2032,39 @@ void RAINIER(int g_nRunNum = 1) {
             } // IsAlive
 
           } // no longer excited
+
+          // saving to tree; slightly hacky coding in order to
+          // ensure that it is thread save, without creating 
+          // one tree per thread
+          #ifdef bSaveTree
+            #ifdef bParallel
+            #pragma omp critical
+            {
+            #endif //bParallel
+            v_dEgs_save = v_dEgs;
+            v_dTimeToLvls_save = v_dTimeToLvls;
+            dExI_save = dExI;
+            nJI_save = nSpbI;
+            nPar_save = nParI;
+            real_save = real;
+            tree->Fill();
+            #ifdef bParallel
+            } // critical
+            #endif
+          #endif // bSaveTree
+
+          // Save progress every g_nEvSave events
+          if( !(ev % g_nEvSave) ) {
+          // only one thread at a time: prevent file corruption
+            #ifdef bParallel
+            #pragma omp critical
+            #endif
+              {
+              cout << "    " << ev << " / " << g_nEvent << "\r" << flush;
+              cout << "Saving Progress" << endl;
+              fSaveFile->Write("",TObject::kOverwrite);
+              } // omp critical
+            } // g_nEvSave
         } //////////////////////////////////////////////////////////////////////
         ////////////////////////// EVENTS //////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
@@ -2081,7 +2150,7 @@ void RAINIER(int g_nRunNum = 1) {
 
 
   cout << "Writing Histograms" << endl;
-  fSaveFile->Write(); // only saves histograms, not the parameters, nor TF1s
+  fSaveFile->Write("",TObject::kOverwrite); // only saves histograms, not the parameters, nor TF1s
   ////// save parameters /////
   #define SAVE_PAR(stream,variable) (stream) <<#variable" "<<(variable) << endl
   #define SAVE_ARR(stream,variable,size) (stream) <<#variable<<" "; for(int i=0; i<size; i++) { (stream) << (variable[i]) << " "; }; (stream) << endl;
