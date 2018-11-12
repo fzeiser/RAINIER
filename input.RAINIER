@@ -1,0 +1,3 @@
+gSystem->SetIncludePath("-fopenmp")
+gSystem->AddLinkedLibs("-lgomp")
+.x RAINIER_copy.C++
