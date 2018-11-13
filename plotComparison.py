@@ -6,12 +6,19 @@ import os
 from uncertainties import ufloat, unumpy
 from uncertainties.umath import *  # sin(), etc
 from scipy.ndimage.filters import gaussian_filter
-from StringIO import StringIO
+import io
+from utilities import *
+from scipy.ndimage import gaussian_filter1d
+from scipy import interpolate
 
 sns.set()
 
-sns.set_context("paper")
+# sns.set_context("paper")
+# sns.set_context("talk")
+
 # sns.set(font_scale=1.2) # Bigger than normal fonts
+# sns.set(font_scale=1.2)
+sns.set(rc={'figure.figsize':(5.5,6.5)})
 sns.set_style("ticks", { 'axes.grid': True})
 plt.rcParams['legend.loc'] = 'best'
 
@@ -20,10 +27,10 @@ cwd = os.getcwd()
 
 def rhoCT(Ex,T,E0):
 	E = Ex-E0
-	return exp(E/T)/T
+	return np.exp(E/T)/T
 
 from decimal import Decimal
-print '%.2E' % Decimal(rhoCT(6.5,T=0.425,E0=-0.456))
+print(('%.2E' % Decimal(rhoCT(6.543,T=0.425,E0=-0.456))))
 # print rhoCT(6.5,T=0.44,E0=-0.456)
 
 
@@ -35,12 +42,12 @@ def getCalibrationFromCounting(filename):
     lines = f.readlines()
     #19: float a0 =  -0.7800;
     #20: float a1 =   0.1300;
-    cal = np.genfromtxt(StringIO(lines[18]),dtype=object, delimiter="=")
-    if cal[0]!="float a0 ":
+    cal = np.genfromtxt(io.BytesIO(lines[18].encode()),dtype=object, delimiter="=")
+    if cal[0]!=b"float a0 ":
         raise ValueError("Could not read calibration")
     a0 = float(cal[1][:-1])
-    cal = np.genfromtxt(StringIO(lines[19]),dtype=object, delimiter="=")
-    if cal[0]!="float a1 ":
+    cal = np.genfromtxt(io.BytesIO(lines[19].encode()),dtype=object, delimiter="=")
+    if cal[0]!=b"float a1 ":
         raise ValueError("Could not read calibration")
     a1 = float(cal[1][:-1])
     return a0, a1
@@ -82,7 +89,7 @@ def getTransExt(myfile, a0_strength, a1_strength, Emin, Emax):
 
 def ReadFiles(folder, label):
     a0_strength, a1_strength = getCalibrationFromCounting(folder+"/counting.cpp")
-    print "Reading {0}\nwith calibration a0={1:.3e}, a1 ={2:.3e}".format(folder, a0_strength, a1_strength)
+    print(("Reading {0}\nwith calibration a0={1:.3e}, a1 ={2:.3e}".format(folder, a0_strength, a1_strength)))
     strength = convertStrength(folder+"/strength.nrm",a0_strength, a1_strength)
     trans = getTransExt(folder+"/transext.nrm", a0_strength, a1_strength, Emin=0.1, Emax=8.)
     nld = convertStrength(folder+"/rhopaw.cnt",a0_strength, a1_strength)
@@ -92,36 +99,101 @@ def ReadFiles(folder, label):
     		 'label':label}
     return data
 
-OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_parity_rhotot","Potel_rhotot")
-OCL_Potel = ReadFiles(cwd+"/Jint_Greg","Potel_r30")
-OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_r10_stripNLD","Potel_r10")
-OCL_EB05 = ReadFiles(cwd+"/Jint_EB06","EB05")		   
+# normal runs
+# # OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/1Gen_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_gsf01/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=0.3")
+OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
+OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
+OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded",r"$g_{pop} = g_{int}$") 
+
+# tests
+# # # OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/1Gen_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+# # OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all E1")
+# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allM1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all M1")
+# # OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
+# OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
+# OCL_EB05 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all E1")
+
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/1Gen_rhotot","Potel_rhotot")
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
+# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
+# OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
+
+
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_parity_rhotot","Potel_rhotot")
+# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_parity","Potel_r30")
+# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama/1Gen","Potel_1Gen")
+# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_parity_discred","Potel_r30_redDiscStates")
+
+# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_trueNLD","EB05_trueNLD")
+# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded","EB05")   	   
+# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded",r"$g_{pop} = g_{int}$")          
+
 
 # Make x-axis array to plot from
 # Earray = np.linspace(0,20,800)
 ###############################
+# plotting helpers 
+
+def plotData(data, dicEntry, axis, fmt='v-', **kwarg):
+    try:
+        plot = ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], yerr=data[dicEntry][:,2], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"], **kwarg)
+    except (IndexError):
+        # plot = plt.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"])
+        plot = ax.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt, **kwarg)
+
+    return plot
+
+def calcRatio(set1, set2, attribute):
+    set1un = unumpy.uarray(set1[attribute][:,1],std_devs=set1[attribute][:,2])
+    set2un = unumpy.uarray(set2[attribute][:,1],std_devs=set2[attribute][:,2])
+    return set1un/set2un
+
+def calcRatioTrue(dic1, true, attribute):
+    try:
+        un1 = unumpy.uarray(dic1[attribute][:,1],std_devs=dic1[attribute][:,2])
+    except:
+        un1 = unumpy.uarray(dic1[attribute][:,1],std_devs=0)
+    true_interpolate = np.interp(dic1[attribute][:,0],true[:,0],true[:,1])
+    return un1/true_interpolate
+
+###########################
 # Initialize figure
-# plt.figure()
-fig= plt.figure("NLD")
-ax = fig.add_subplot(211)
-ax.set_yscale("log", nonposy='clip')
+fig, axes = plt.subplots(2,1)
+ax, ax2 = axes
 
-ax.tick_params("x", top="off")
-ax.tick_params("y", right="off")
+for axi in axes.flat:
+    axi.yaxis.set_major_locator(plt.MaxNLocator(4))
+    axi.tick_params("x", top="off")
+    axi.tick_params("y", right="off")
+    axi.set_xlim(0,7)
 
-def plotData(data, dicEntry, fmt='v-'):
-	try:
-		plot = plt.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], yerr=data[dicEntry][:,2], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"])
-	except (IndexError):
-		# plot = plt.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt, label=data["label"])
-		plot = plt.errorbar(data[dicEntry][:,0], data[dicEntry][:,1], markersize=4, linewidth=1.5, fmt=fmt)
+ax.set_yscale("log", nonposy='clip') # needs to come after MaxNLocator
+ax.set_ylim(bottom=1, top=1e8)
+ax2.set_ylim(0,1.9)
 
-	return plot
+# horizontal comparison line
+ax2.axhline(1, color='r')
+
+ax.set_ylabel(r'$\rho$ [1/MeV]',fontsize="medium")
+ax2.set_xlabel(r'$E_x$ [MeV]',fontsize="medium")
+ax2.set_ylabel(r'ratio to input',fontsize="medium")
+
+# Fine-tune figure; make subplots close to each other and hide x ticks for upper plot
+fig.subplots_adjust(hspace=0, top=0.98, left=0.17, right=0.98)
+plt.setp(ax.get_xticklabels(), visible=False)
+color_pallet = sns.color_palette()
+# plt.tight_layout()
+
 
 NLD_true_disc = np.loadtxt("misc/NLD_exp_disc.dat")
 NLD_true_cont = np.loadtxt("misc/NLD_exp_cont.dat")
 # apply same binwidth to continuum states
 binwidth_goal = NLD_true_disc[1,0]-NLD_true_disc[0,0]
+print(binwidth_goal)
 binwidth_cont = NLD_true_cont[1,0]-NLD_true_cont[0,0]
 Emax = NLD_true_cont[-1,0]
 nbins = int(np.ceil(Emax/binwidth_goal))
@@ -133,161 +205,214 @@ NLD_true[:nbins,0] = bins[:nbins]
 NLD_true[:,1] = hist/binwidth_goal
 NLD_true[:len(NLD_true_disc),1] += NLD_true_disc[:,1]
 
-OCL_Potel_nld = plotData(OCL_Potelr10, dicEntry="nld", fmt="v--")
-OCL_Potel_nld = plotData(OCL_Potel, dicEntry="nld", fmt="v--")
-OCL_Potel_rhotot_nld = plotData(OCL_Potel_rhotot, dicEntry="nld")
-OCL_EB05_nld = plotData(OCL_EB05, dicEntry="nld")
-plt.step(np.append(-binwidth_goal,NLD_true[:-1,0])+binwidth_goal/2.,np.append(0,NLD_true[:-1,1]), "k", where="pre",label="input NLD, binned")
+# plot "true nld"
+ax.step(np.append(-binwidth_goal,NLD_true[:-1,0])+binwidth_goal/2.,np.append(0,NLD_true[:-1,1]), "k", where="pre",label="input NLD, binned")
 
-handles, labels = ax.get_legend_handles_labels()
-lgd1= ax.legend(handles, labels)
+def plotNLDs(dataset, **kwarg):
+    plotData(dataset, dicEntry="nld", axis=ax, **kwarg)
+    ratio_nld = calcRatioTrue(dataset,NLD_true, "nld")
+    ax2.errorbar(dataset["nld"][:,0], unumpy.nominal_values(ratio_nld), yerr=unumpy.std_devs(ratio_nld), markersize=4, linewidth=1.5, fmt='v-', label=OCL_EB05["label"], **kwarg)
+    handles, labels = ax.get_legend_handles_labels()
+    lgd1= ax.legend(handles, labels, fontsize="medium")
+    return ratio_nld
 
-plt.xlim(0,7)
-plt.xlabel(r'$E_x$ [MeV]',fontsize="medium")
-plt.ylabel(r'levels/MeV',fontsize="medium")
+# OCL_Potel_nld = plotData(OCL_Potelr10, dicEntry="nld", fmt="v--")
+plotNLDs(OCL_EB05, color=color_pallet[0])
+plt.savefig("nld_RAINIER_0.pdf")
 
-#############################
-# fig= plt.figure("Ratios NLD")
-ax2 = fig.add_subplot(212, sharex=ax)
-# ax.set_yscale("log", nonposy='clip')
+ratio_nld = plotNLDs(OCL_Potel_rhotot, color=color_pallet[1])
+plt.savefig("nld_RAINIER_1.pdf")
 
-ax2.tick_params("x", top="off")
-ax2.tick_params("y", right="off")
+plotNLDs(OCL_Potel, color=color_pallet[2])
+plt.savefig("nld_RAINIER_2.pdf")
 
-def calcRatio(set1, set2, attribute):
-	set1un = unumpy.uarray(set1[attribute][:,1],std_devs=set1[attribute][:,2])
-	set2un = unumpy.uarray(set2[attribute][:,1],std_devs=set2[attribute][:,2])
-	return set1un/set2un
-
-def calcRatioTrue(dic1, true, attribute):
-	un1 = unumpy.uarray(dic1[attribute][:,1],std_devs=dic1[attribute][:,2])
-	true_interpolate = np.interp(dic1[attribute][:,0],true[:,0],true[:,1])
-	return un1/true_interpolate
-
-ratio = calcRatioTrue(OCL_Potel,NLD_true, "nld")
-ratio_plot = plt.errorbar(OCL_Potel["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v--', color="grey", label=OCL_Potel["label"])
-ratio = calcRatioTrue(OCL_Potel_rhotot,NLD_true, "nld")
-ratio_plot = plt.errorbar(OCL_Potel_rhotot["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='.-', color="black", label=OCL_Potel_rhotot["label"])
-ratio = calcRatioTrue(OCL_EB05,NLD_true, "nld")
-ratio_plot = plt.errorbar(OCL_EB05["nld"][:,0], unumpy.nominal_values(ratio), yerr=unumpy.std_devs(ratio), markersize=4, linewidth=1.5, fmt='v-', color="green", label=OCL_EB05["label"])
-
-# # gaussian smoothing of ratios
-# # approximated (!) variance reduction by gaussian filter; https://dsp.stackexchange.com/questions/26859/how-will-a-gaussian-blur-affect-image-variance
-# sigma_smooth = 1.
-# uncReduction = 2*sqrt(np.pi)*sigma_smooth
-# ratio = calcRatioTrue(OCL_Potel,NLD_true, "nld")
-# ratio_plot = plt.errorbar(OCL_Potel["nld"][:,0], gaussian_filter(unumpy.nominal_values(ratio),sigma=sigma_smooth), yerr=unumpy.std_devs(ratio)/uncReduction, markersize=4, linewidth=1.5, fmt='v--', color="grey", label=OCL_Potel["label"]+", smoothed")
-# ratio = calcRatioTrue(OCL_Potel_rhotot,NLD_true, "nld")
-# ratio_plot = plt.errorbar(OCL_Potel_rhotot["nld"][:,0], gaussian_filter(unumpy.nominal_values(ratio),sigma=sigma_smooth), yerr=unumpy.std_devs(ratio)/uncReduction, markersize=4, linewidth=1.5, fmt='.-', color="black", label=OCL_Potel_rhotot["label"]+", smoothed")
-# ratio = calcRatioTrue(OCL_EB05,NLD_true, "nld")
-# ratio_plot = plt.errorbar(OCL_EB05["nld"][:,0], gaussian_filter(unumpy.nominal_values(ratio),sigma=sigma_smooth), yerr=unumpy.std_devs(ratio)/uncReduction, markersize=4, linewidth=1.5, fmt='v-', color="green", label=OCL_EB05["label"]+", smoothed")
-
-
-ax2.axhline(1, color='r')
-
-handles, labels = ax2.get_legend_handles_labels()
-lgd1= ax2.legend(handles, labels)
-
-ax2.set_ylim(0,2)
-
-plt.xlabel(r'$E_x$ [MeV]',fontsize="medium")
-plt.ylabel(r'ratio to input',fontsize="medium")
-
-# Fine-tune figure; make subplots close to each other and hide x ticks for
-# all but bottom plot.
-fig.subplots_adjust(hspace=0)
-plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 plt.savefig("nld_RAINIER.pdf")
+
+
 ###############################
 
-fig= plt.figure("gSF")
-ax = fig.add_subplot(211)
-ax.set_yscale("log", nonposy='clip')
 
-ax.tick_params("x", top="off")
-ax.tick_params("y", right="off")
+fig, axes = plt.subplots(2,1)
+ax, ax2 = axes
+
+color_pallet = sns.color_palette()
+
+for axi in axes.flat:
+    axi.yaxis.set_major_locator(plt.MaxNLocator(5))
+    axi.tick_params("x", top="off")
+    axi.tick_params("y", right="off")
+    axi.set_xlim(0,7)
+
+ax.set_yscale("log", nonposy='clip') # needs to come after MaxNLocator
+ax2.set_ylim(0,2.4)
+
+# horizontal comparison line
+ax2.axhline(1, color='r')
+
+ax.set_ylabel(r'$\gamma$SF [1/MeV$^3$]',fontsize="medium")
+ax2.set_xlabel(r'$E_\gamma$ [MeV]',fontsize="medium")
+ax2.set_ylabel(r'ratio to input',fontsize="medium")
+
+# Fine-tune figure; make subplots close to each other and hide x ticks for upper plot
+fig.subplots_adjust(hspace=0, top=0.98, left=0.17, right=0.98)
+plt.setp(ax.get_xticklabels(), visible=False)
 
 # Plot data points with error bars
 
-# GDR data
-# experimental1
 
-#test
-# OCL_singleJ_sf = plt.errorbar(OCL_singleJ["strength"][:,0], OCL_singleJ["strength"][:,1], yerr=OCL_singleJ["strength"][:,2], markersize=4, linewidth=1.5, fmt='v-', color="purple", label=OCL_singleJ["label"])
-# # OCL_singleJ_tr = ax.plot(OCL_singleJ["trans"][:,0], OCL_singleJ["trans"][:,1], '--',markersize=4, linewidth=1.5, color="purple")
-# # OCL_singleJ.update({"plt":OCL_singleJ_sf, "plt_trans":OCL_singleJ_tr})
-
-# OCL_Potel_sf = plt.errorbar(OCL_Potel["strength"][:,0], OCL_Potel["strength"][:,1], yerr=OCL_Potel["strength"][:,2], markersize=4, linewidth=1.5, fmt='v-', color="green", label=OCL_Potel["label"])
-# OCL_Potel_tr = ax.plot(OCL_Potel["trans"][:,0], OCL_Potel["trans"][:,1], '--',markersize=4, linewidth=1.5, color="green")
-# OCL_Potel.update({"plt":OCL_Potel_sf, "plt_trans":OCL_Potel_tr})
-
-# OCL_EB05_sf = plt.errorbar(OCL_EB05["strength"][:,0], OCL_EB05["strength"][:,1], yerr=OCL_EB05["strength"][:,2], markersize=4, linewidth=1.5, fmt='v-', color="black", label=OCL_EB05["label"])
-# OCL_EB05_tr = ax.plot(OCL_EB05["trans"][:,0], OCL_EB05["trans"][:,1], '--',markersize=4, linewidth=1.5, color="black")
-# OCL_EB05.update({"plt":OCL_EB05_sf, "plt_trans":OCL_EB05_tr})
-
-OCL_Potelr10_plot = plotData(OCL_Potelr10, dicEntry="strength")
-OCL_Potel_plot = plotData(OCL_Potel, dicEntry="strength")
-OCL_Potel_rhotot_plot = plotData(OCL_Potel_rhotot, dicEntry="strength", fmt="--")
-OCL_EB05_plot = plotData(OCL_EB05, dicEntry="strength")
-
-plt.gca().set_prop_cycle(None) # reset color cycle
-
-OCL_Potelr10_plot = plotData(OCL_Potelr10, dicEntry="trans", fmt="--")
-OCL_Potel_plot = plotData(OCL_Potel, dicEntry="trans", fmt="--")
-OCL_Potel_rhotot_plot = plotData(OCL_Potel_rhotot, dicEntry="trans", fmt="--")
-OCL_EB05_plot = plotData(OCL_EB05, dicEntry="trans", fmt="--")
-
-
-gSF_true_all = np.loadtxt("misc/GSFTable_py.dat")
+gSF_true_all = np.loadtxt("Jint_Greg_mama_RIPL_gsf01/GSFTable_py.dat")
 gSF_true_tot = gSF_true_all[:,1] + gSF_true_all[:,2]
-gSF_true = np.array(zip(gSF_true_all[:,0],gSF_true_tot))
-gSF_true_plot = plt.plot(gSF_true[:140,0],gSF_true[:140,1], "k-", label="gSF_true")
+gSF_true = np.array(list(zip(gSF_true_all[:,0],gSF_true_tot)))
+gSF_true_plot = ax.plot(gSF_true[:140,0],gSF_true[:140,1], "k-", label="gSF_true")
 
-handles, labels = ax.get_legend_handles_labels()
-lgd1= ax.legend(handles, labels)
-# lgd2 = ax.legend([KopecyE1], ['data'])
-# plt.gca().add_artist(lgd1)
-# ax.legend([(shade_r100,OCL_r100), (shade_r008,OCL_r008), (shade_r008tadj,OCL_r008), gur79, mor93, ber86, KopecyE1, KopecyM1, OCL_fermi_r100, OCL_fermi_r008,OCL_Potel,OCL_EB05],
-#                 ["Oslo (r=1) incl. upper/lower band", "Oslo (r=0.08) incl. upper/lower band","Oslo (r=0.08); + 0.02 uncertainty in T_red; incl. upper/lower band" ,"Gurevich 1976", "Moraes 1993",  "Berman 1986/Evaluated", "Kopecky 2017 (E1)", "Kopecky 2017 (M1)", "OCL, FG, r=1", "OCL, FG, r=0.08",
-#                 "OCL_Potel","OCL_EB05"],
-# 	            loc=4)
-# ax.legend(handler_map={OCL_r100:HandlerLine2D(numpoints=2)})
+# OCL_EB05_plot = plotData(OCL_EB05, dicEntry="strength", axis=ax)
+# OCL_Potel_rhotot_plot = plotData(OCL_Potel_rhotot, dicEntry="strength", fmt="--", axis=ax)
+# OCL_Potel_plot = plotData(OCL_Potel, dicEntry="strength", axis=ax)
+# OCL_Potelr10_plot = plotData(OCL_Potelr10, dicEntry="strength", axis=ax)
 
-plt.xlabel(r'$E_\gamma$ [MeV]',fontsize="medium")
-plt.ylabel(r"$\gamma$SF [MeV$^{-3}$]",fontsize="medium")
+def plotGSFs(dataset, **kwarg):
+    plotData(dataset, dicEntry="strength", axis=ax, **kwarg)
+    plotData(dataset, dicEntry="trans", fmt="--", axis=ax, **kwarg)
+    ratio_gSF = calcRatioTrue(dataset,gSF_true, "strength")
+    ax2.errorbar(dataset["strength"][:,0], unumpy.nominal_values(ratio_gSF), yerr=unumpy.std_devs(ratio_gSF), markersize=4, linewidth=1.5, fmt='v-', label=dataset["label"], **kwarg)
+    handles, labels = ax.get_legend_handles_labels()
+    lgd1= ax.legend(handles, labels, fontsize="medium")
+    return ratio_gSF
 
+plotGSFs(OCL_EB05, color=color_pallet[0])
+plt.savefig("gsf_RAINIER_0.pdf")
 
-#############################
-# fig= plt.figure("Ratios gSF")
-ax2 = fig.add_subplot(212, sharex = ax)
-# ax.set_yscale("log", nonposy='clip')
+ratio_gSF = plotGSFs(OCL_Potel_rhotot, color=color_pallet[1])
+plt.savefig("gsf_RAINIER_1.pdf")
 
-ax2.tick_params("x", top="off")
-ax2.tick_params("y", right="off")
+plotGSFs(OCL_Potel, color=color_pallet[2])
+plt.savefig("gsf_RAINIER_2.pdf")
 
-ratio_gSF_true = calcRatioTrue(OCL_Potelr10,gSF_true, "strength")
-ratio_plot = plt.errorbar(OCL_Potelr10["strength"][:,0], unumpy.nominal_values(ratio_gSF_true), yerr=unumpy.std_devs(ratio_gSF_true), markersize=4, linewidth=1.5, fmt='.-', color="C3", label=OCL_Potelr10["label"])
-ratio_gSF_true = calcRatioTrue(OCL_Potel,gSF_true, "strength")
-ratio_plot = plt.errorbar(OCL_Potel["strength"][:,0], unumpy.nominal_values(ratio_gSF_true), yerr=unumpy.std_devs(ratio_gSF_true), markersize=4, linewidth=1.5, fmt='.-', color="black", label=OCL_Potel["label"])
-ratio_gSF_true = calcRatioTrue(OCL_EB05,gSF_true, "strength")
-ratio_plot = plt.errorbar(OCL_EB05["strength"][:,0], unumpy.nominal_values(ratio_gSF_true), yerr=unumpy.std_devs(ratio_gSF_true), markersize=4, linewidth=1.5, fmt='v-', color="grey", label=OCL_EB05["label"])
+plotGSFs(OCL_Potelr10, color=color_pallet[3])
+plt.savefig("gsf_RAINIER_3.pdf")
 
-ax2.axhline(1, color='r')
-
-handles, labels = ax2.get_legend_handles_labels()
-lgd1= ax2.legend(handles, labels)
-
-ax2.set_ylim(0,3)
-plt.xlim((0,7))
-
-plt.xlabel(r'$E_\gamma$ [MeV]',fontsize="medium")
-plt.ylabel(r'ratio to input',fontsize="medium")
-
-# Fine-tune figure; make subplots close to each other and hide x ticks for
-# all but bottom plot.
-fig.subplots_adjust(hspace=0)
-plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 plt.savefig("gsf_RAINIER.pdf")
+
 ###############################
 
+# plt.show()
+
+
+###############################
+
+# Get new, "corrected" nld and gSF
+# that can be set into RAINIER for the next iteration
+Sn = 6.534
+E_crit = 1.03755 # critical energy / last discrete level
+# E_fitmin = 2. # ignore data below 2 MeV -- arb. selection
+
+
+
+E_exp = OCL_Potel_rhotot["nld"][:,0]
+idE_crit = np.abs(E_exp-E_crit).argmin()
+E_exp = E_exp[idE_crit:]
+y = unumpy.nominal_values(1/ratio_nld)[idE_crit:]
+y_smooth = gaussian_filter1d(y, sigma=2)
+yerr = unumpy.std_devs(1/ratio_nld)[idE_crit:]
+
+# add constraint: no change a Sn
+E_exp = np.append(E_exp,Sn)
+y = np.append(y,1.)
+y_smooth = np.append(y_smooth,1.)
+yerr = np.append(yerr,1e-9)
+
+# spl = UnivariateSpline(E_exp, y, w=1/yerr)
+# idE = np.abs(E_exp-E_fitmin).argmin()
+# popt_nld = np.polyfit(E_exp[idE:], y[idE:], deg=1, rcond=None, full=False, w=1/yerr[idE:], cov=False)
+# fcorr_nld = np.poly1d(popt_nld)
+# print(("popt_nld", popt_nld))
+
+# fcorr_nld = interpolate.interp1d(E_exp, y_smooth)
+
+plt.figure()
+plt.errorbar(E_exp, y, yerr)
+xarr = np.linspace(E_crit,Sn)
+# plt.plot(xarr,fcorr_nld(xarr))
+plt.plot(E_exp, y_smooth)
+# plt.show()
+
+# apply correction
+nld_init = rhoCT(E_exp,T=0.425,E0=-0.456)
+rho_new = y_smooth * nld_init
+plt.figure()
+plt.semilogy(E_exp, nld_init)
+plt.plot(E_exp,rho_new)
+# plt.show()
+
+# Write to RAINIER
+def sigma2(U,A,a,E1, rmi_red=1):
+    #cut-off parameters of EB05
+    sigma2 = np.sqrt(rmi_red) * 0.0146*A**(5./3.) * ( 1. + np.sqrt(1. + 4.*a*(U-E1)) ) / (2.*a)
+    return np.sqrt(sigma2)
+
+def sigma(U,A,a,E1, rmi_red=1):
+    return np.sqrt(sigma2(U,A,a,E1, rmi_red=1))
+
+fname = "nld_new.dat"
+WriteRAINIERnldTable(fname, E_exp, rho_new, sigma(U=E_exp, A=240, a=25.16,E1=0.12), a=None)
+
+##########################################
+# repeat for gSF
+
+def getFullRatio(dataset):
+    ratio_gSF = calcRatioTrue(dataset,gSF_true, "strength")
+    ratio_trans = calcRatioTrue(dataset,gSF_true, "trans")
+    Eg = dataset["strength"][:,0]
+    Eg_trans = dataset["trans"][:,0]
+    Egsf_min = Eg[0]
+    Egsf_max = Eg[-1]
+    ratio_gSF_tot = [None] * len(Eg_trans)
+
+    j = 0
+    for i, E in enumerate(Eg_trans):
+        if (Egsf_min < E < Egsf_max):
+            ratio_gSF_tot[i] = ratio_gSF[j]
+            j += 1
+        else:
+            ratio_gSF_tot[i] = ratio_trans[i]
+    ratio_gSF_tot = np.array(ratio_gSF_tot)
+    return ratio_gSF_tot
+
+
+ratio_gSF = getFullRatio(OCL_Potel_rhotot)
+E_exp = OCL_Potel_rhotot["trans"][:,0]
+idE_Sn = np.abs(E_exp-Sn).argmin()
+E_exp = E_exp[:idE_Sn]
+gsf_init = OCL_Potel_rhotot["trans"][:idE_Sn,1]
+y = unumpy.nominal_values(1/ratio_gSF)[:idE_Sn]
+yerr = unumpy.std_devs(1/ratio_gSF)[:idE_Sn]
+
+# spl = UnivariateSpline(E_exp, y, w=1/yerr)
+# popt_gsf = np.polyfit(E_exp, y, deg=2, rcond=None, full=False, w=1/yerr, cov=False)
+# fcorr_gsf = np.poly1d(popt_gsf)
+# print("popt_gsf", popt_gsf)
+
+plt.figure()
+plt.errorbar(E_exp, y, yerr)
+# xarr = np.linspace(0,Sn)
+# plt.plot(xarr,fcorr_gsf(xarr))
+
+# from scipy.interpolate import UnivariateSpline
+# spl = UnivariateSpline(E_exp, y, w=1/yerr, k=4)
+# plt.plot(xarr,spl(xarr))
+y_smooth = gaussian_filter1d(y, sigma=2)
+plt.plot(E_exp,y_smooth)
+
+# plt.show()
+
+plt.figure()
+gsf_new = y_smooth * gsf_init
+plt.semilogy(E_exp, gsf_init)
+plt.semilogy(E_exp, gsf_new)
+
+data_all = list(zip(E_exp,gsf_new))
+np.savetxt('gsf_new.dat', data_all, header="E gsf_sum")
+
 plt.show()
+
+
