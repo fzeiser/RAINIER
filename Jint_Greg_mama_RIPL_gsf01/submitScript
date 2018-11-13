@@ -1,0 +1,41 @@
+#!/bin/sh
+#SBATCH --account=uio
+#SBATCH --time=6:00:0
+#SBATCH --mem-per-cpu=500M
+##-----#SBATCH --mail-type=END
+#SBATCH --mail-type=ALL
+##SBATCH --qos=lowpri
+# Number of cores:
+#SBATCH --cpus-per-task=16
+
+## Set up job environment:
+source /cluster/bin/jobsetup
+module purge   # clear any inherited modules
+#source activate testenv
+#module load gcc/4.8.2
+#module load openmpi.gnu/1.8.3
+#module load gcc/4.9.2
+export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+alias setupATLAS='source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh'
+setupATLAS
+lsetup root
+module load openmpi.gnu/2.1.0
+
+#RAINIER_PATH=/usit/abel/u1/fabiobz/RAINIER/
+export RAINIER_PATH=/usit/abel/u1/fabiobz/RAINIER/
+
+
+set -o errexit # exit on errors
+
+#CODEDIR=$SUBMITDIR/
+#CODEDIRTOT=$RAINIER_PATH/$CODEDIR/
+
+cp -r $SUBMITDIR/* $SCRATCH/
+mkdir -p $SUBMITDIR/results
+
+cleanup "cp -r $SCRATCH/* $SUBMITDIR/results/"
+cd $SCRATCH
+bash $RAINIER_PATH/runParallelRAINIER.sh
+#bash $RAINIER_PATH/runRAINIER.sh
+
+
