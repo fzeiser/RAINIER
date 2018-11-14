@@ -1667,9 +1667,9 @@ TGraph *g_grTotWidAvg       [g_nExIMean];
 // to save data to trees
 vector<Double_t> v_dEgs_save; // emitted gamma rays
 double dExI_save; // initial excitation energy
-double nJI_save; // initial spin (for uneven A: J=J-0.5)
-double nPar_save; // initial parity (0 or 1: see elsewhere)
-double real_save; // realization
+int nJI_save; // initial spin (for uneven A: J=J-0.5)
+int nPar_save; // initial parity (0 or 1: see elsewhere)
+int real_save; // realization
 vector<Double_t> v_dTimeToLvls_save; // decay time until this level
 #endif // bSaveTree
 
