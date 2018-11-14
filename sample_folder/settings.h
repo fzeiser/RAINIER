@@ -279,7 +279,7 @@ const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 // cling in root6 won't parse omp.h. but man, root5 flies with 24 cores!
 #else
 #ifdef __linux__ // MacOS wont run omp.h by default, might exist workaround
-    #define bParallel // Parallel Option
+    //#define bParallel // Parallel Option
     // ROOT hisograms not thread safe, but only miss ~1e-5 events
 #endif // linux
 #endif // cling
