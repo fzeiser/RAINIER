@@ -25,118 +25,42 @@ plt.rcParams['legend.loc'] = 'best'
 cwd = os.getcwd()
 ###########
 
-def rhoCT(Ex,T,E0):
-	E = Ex-E0
-	return np.exp(E/T)/T
-
-from decimal import Decimal
-print(('%.2E' % Decimal(rhoCT(6.543,T=0.425,E0=-0.456))))
-# print rhoCT(6.5,T=0.44,E0=-0.456)
-
-
-
-###########
-# get calibration from counting.dat
-def getCalibrationFromCounting(filename):
-    f = open(filename)
-    lines = f.readlines()
-    #19: float a0 =  -0.7800;
-    #20: float a1 =   0.1300;
-    cal = np.genfromtxt(io.BytesIO(lines[18].encode()),dtype=object, delimiter="=")
-    if cal[0]!=b"float a0 ":
-        raise ValueError("Could not read calibration")
-    a0 = float(cal[1][:-1])
-    cal = np.genfromtxt(io.BytesIO(lines[19].encode()),dtype=object, delimiter="=")
-    if cal[0]!=b"float a1 ":
-        raise ValueError("Could not read calibration")
-    a1 = float(cal[1][:-1])
-    return a0, a1
-
-# transform strength.nrm to f
-def convertStrength(filename,a0_strength, a1_strength):
-    data_ocl = np.loadtxt(filename)
-    data_ocl_copy = data_ocl
-    n_datapoints = int(len(data_ocl_copy)/2)
-    data_ocl = np.ndarray((n_datapoints,3),dtype=float)
-    for i in range(n_datapoints):
-        if ( data_ocl_copy[i] > 0 ): 
-            data_ocl[i,0] = a0_strength + (a1_strength*i)
-        else:
-            data_ocl[i,0] = 0
-        data_ocl[i,1] = data_ocl_copy[i]
-        data_ocl[i,2] = data_ocl_copy[i+n_datapoints]
-    data_ocl = data_ocl[np.all(data_ocl,axis=1)] # delete "0" elments
-    return data_ocl
-
-# Extrapolation of the transmission coefficient
-def getTransExt(myfile, a0_strength, a1_strength, Emin, Emax):
-	transextfile = open(myfile)
-	transextlines = transextfile.readlines()
-	transextfile.close()
-	Ntrans = len(transextlines)
-	trans = np.zeros((Ntrans,2))
-	for i in range(Ntrans):
-		trans[i,0] = a0_strength + i*a1_strength
-		trans[i,1] = float(transextlines[i].split()[0])/(2.*np.pi*trans[i,0]**3.)
-	trans = trans[np.all((trans[:,0]>Emin,trans[:,0]<Emax), axis = 0),:]
-	return trans
-
-# OCL_singleJ_strength = convertStrength(cwd+"/Jint_singleJ/strength.nrm")
-# OCL_singleJ_trans = getTransExt("/Jint_singleJ/transext.nrm", Emin=0.1, Emax=8.)
-# OCL_singleJ = {'strength': OCL_singleJ_strength, 
-# 			   'trans': OCL_singleJ_trans,
-# 			    'label':"J_pop=3 (less statistics)"}
-
 def ReadFiles(folder, label):
     a0_strength, a1_strength = getCalibrationFromCounting(folder+"/counting.cpp")
     print(("Reading {0}\nwith calibration a0={1:.3e}, a1 ={2:.3e}".format(folder, a0_strength, a1_strength)))
     strength = convertStrength(folder+"/strength.nrm",a0_strength, a1_strength)
     trans = getTransExt(folder+"/transext.nrm", a0_strength, a1_strength, Emin=0.1, Emax=8.)
     nld = convertStrength(folder+"/rhopaw.cnt",a0_strength, a1_strength)
-    data = {'strength': strength, 
+    NLD_exp_cont = np.loadtxt(folder+"/../nld_new.txt")
+    gsf_input = np.loadtxt(folder+"/../GSFTable_py.dat")
+    gsf_input = np.c_[gsf_input[:,0], gsf_input[:,1]+gsf_input[:,2]]
+    data = {'strength': strength,
     		 'trans': trans,
+             'gsf_input': gsf_input,
     	     'nld': nld,
+             'nld_cont' : NLD_exp_cont,
     		 'label':label}
     return data
 
-# normal runs
-# # OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/1Gen_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_gsf01/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=0.3")
-OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
-OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
-OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded",r"$g_{pop} = g_{int}$") 
-
-# tests
-# # # OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/1Gen_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-# # OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all E1")
-# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allM1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all M1")
-# # OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
-# OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_absolut/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
-# OCL_EB05 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_allE1/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1, all E1")
-
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/1Gen_rhotot","Potel_rhotot")
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_rhotot",r"$g_{pop} \ll g_{int}$, r=1.0")
-# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_r30",r"$g_{pop} \ll g_{int}$, r=0.3")
-# OCL_Potelr10 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL/folded_r10",r"$g_{pop} \ll g_{int}$, r=0.1")
+def log_interp1d(xx, yy, kind='linear'):
+    logx = np.log10(xx)
+    logy = np.log10(yy)
+    lin_interp = interpolate.interp1d(logx, logy, kind=kind)
+    log_interp = lambda zz: np.power(10.0, lin_interp(np.log10(zz)))
+    return log_interp
 
 
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_parity_rhotot","Potel_rhotot")
-# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_parity","Potel_r30")
-# OCL_Potel_rhotot = ReadFiles(cwd+"/Jint_Greg_mama/1Gen","Potel_1Gen")
-# OCL_Potel = ReadFiles(cwd+"/Jint_Greg_parity_discred","Potel_r30_redDiscStates")
+# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded",r"$g_{pop} = g_{int}$")
+OCL_Potel01 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_gsf01/folded_rhotot",r"Iteration 1, $g_{pop} \ll g_{int}$, r=1.0")
+OCL_Potel02 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_gsf_changesep_02_02/folded_rhotot",r"Iteration 2, $g_{pop} \ll g_{int}$, r=1.0")
+# OCL_Potel03 = ReadFiles(cwd+"/Jint_Greg_mama_RIPL_gsf01/folded_rhotot",r"Out 01 $g_{pop} \ll g_{int}$")
+current_dataset = OCL_Potel02 # which dataset should we compare to
 
-# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_trueNLD","EB05_trueNLD")
-# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded","EB05")   	   
-# OCL_EB05 = ReadFiles(cwd+"/Jint_EB06_mama/folded",r"$g_{pop} = g_{int}$")          
+Sn = 6.534
+E_crit = 1.03755 # critical energy / last discrete level
 
-
-# Make x-axis array to plot from
-# Earray = np.linspace(0,20,800)
 ###############################
-# plotting helpers 
+# plotting helpers
 
 def plotData(data, dicEntry, axis, fmt='v-', **kwarg):
     try:
@@ -152,13 +76,13 @@ def calcRatio(set1, set2, attribute):
     set2un = unumpy.uarray(set2[attribute][:,1],std_devs=set2[attribute][:,2])
     return set1un/set2un
 
-def calcRatioTrue(dic1, true, attribute):
+def calcRatioTrue(dic1, obs, attribute):
     try:
         un1 = unumpy.uarray(dic1[attribute][:,1],std_devs=dic1[attribute][:,2])
     except:
         un1 = unumpy.uarray(dic1[attribute][:,1],std_devs=0)
-    true_interpolate = np.interp(dic1[attribute][:,0],true[:,0],true[:,1])
-    return un1/true_interpolate
+    obs_interpolate = np.interp(dic1[attribute][:,0],obs[:,0],obs[:,1])
+    return un1/obs_interpolate
 
 ###########################
 # Initialize figure
@@ -189,45 +113,62 @@ color_pallet = sns.color_palette()
 # plt.tight_layout()
 
 
-NLD_true_disc = np.loadtxt("misc/NLD_exp_disc.dat")
-NLD_true_cont = np.loadtxt("misc/NLD_exp_cont.dat")
+NLD_obs_binned_disc = np.loadtxt("misc/NLD_exp_disc.dat")
+NLD_obs_binned_cont = current_dataset["nld_cont"]
 # apply same binwidth to continuum states
-binwidth_goal = NLD_true_disc[1,0]-NLD_true_disc[0,0]
+binwidth_goal = NLD_obs_binned_disc[1,0]-NLD_obs_binned_disc[0,0]
 print(binwidth_goal)
-binwidth_cont = NLD_true_cont[1,0]-NLD_true_cont[0,0]
-Emax = NLD_true_cont[-1,0]
+binwidth_cont = NLD_obs_binned_cont[1,0]-NLD_obs_binned_cont[0,0]
+Emax = NLD_obs_binned_cont[-1,0]
 nbins = int(np.ceil(Emax/binwidth_goal))
 Emax_adjusted = binwidth_goal*nbins # Trick to get an integer number of bins
 bins = np.linspace(0,Emax_adjusted,nbins+1)
-hist, edges = np.histogram(NLD_true_cont[:,0],bins=bins,weights=NLD_true_cont[:,1]*binwidth_cont)
-NLD_true = np.zeros((nbins,2))
-NLD_true[:nbins,0] = bins[:nbins]
-NLD_true[:,1] = hist/binwidth_goal
-NLD_true[:len(NLD_true_disc),1] += NLD_true_disc[:,1]
+hist, edges = np.histogram(NLD_obs_binned_cont[:,0],bins=bins,weights=NLD_obs_binned_cont[:,1]*binwidth_cont)
+NLD_obs_binned = np.zeros((nbins,2))
+NLD_obs_binned[:nbins,0] = bins[:nbins]
+NLD_obs_binned[:,1] = hist/binwidth_goal
+NLD_obs_binned[:len(NLD_obs_binned_disc),1] += NLD_obs_binned_disc[:,1]
 
-# plot "true nld"
-ax.step(np.append(-binwidth_goal,NLD_true[:-1,0])+binwidth_goal/2.,np.append(0,NLD_true[:-1,1]), "k", where="pre",label="input NLD, binned")
+# plot "obs nld"
+ax.step(np.append(-binwidth_goal,NLD_obs_binned[:-1,0])+binwidth_goal/2.,np.append(0,NLD_obs_binned[:-1,1]), "k", where="pre",label="generated NLD, binned")
 
 def plotNLDs(dataset, **kwarg):
     plotData(dataset, dicEntry="nld", axis=ax, **kwarg)
-    ratio_nld = calcRatioTrue(dataset,NLD_true, "nld")
-    ax2.errorbar(dataset["nld"][:,0], unumpy.nominal_values(ratio_nld), yerr=unumpy.std_devs(ratio_nld), markersize=4, linewidth=1.5, fmt='v-', label=OCL_EB05["label"], **kwarg)
+    ratio_nld = calcRatioTrue(dataset,nld_init, "nld")
+    ax2.errorbar(dataset["nld"][:,0], unumpy.nominal_values(ratio_nld), yerr=unumpy.std_devs(ratio_nld), markersize=4, linewidth=1.5, fmt='v-', label=dataset["label"], **kwarg)
     handles, labels = ax.get_legend_handles_labels()
     lgd1= ax.legend(handles, labels, fontsize="medium")
     return ratio_nld
 
-# OCL_Potel_nld = plotData(OCL_Potelr10, dicEntry="nld", fmt="v--")
-plotNLDs(OCL_EB05, color=color_pallet[0])
-plt.savefig("nld_RAINIER_0.pdf")
+# plotNLDs(OCL_EB05, color=color_pallet[0])
+# plt.savefig("nld_RAINIER_0.pdf")
 
-ratio_nld = plotNLDs(OCL_Potel_rhotot, color=color_pallet[1])
+E_exp = OCL_Potel01["nld"][:,0]
+idE_crit = np.abs(E_exp-E_crit).argmin()
+E_exp = E_exp[idE_crit:]
+E_exp = np.append(E_exp,Sn)
+nld_init = rhoCT(E_exp,T=0.425,E0=-0.456)
+nld_init = np.c_[E_exp,nld_init]
+ax.plot(nld_init[:,0], nld_init[:,1],"y-", label="input NLD from CT")
+# NLD_obs_binned=np.c_[E_exp,nld_init]
+
+plotNLDs(OCL_Potel01, color=color_pallet[1])
 plt.savefig("nld_RAINIER_1.pdf")
 
-plotNLDs(OCL_Potel, color=color_pallet[2])
-plt.savefig("nld_RAINIER_2.pdf")
+try:
+    plotNLDs(OCL_Potel02, color=color_pallet[2])
+    plt.savefig("nld_RAINIER_2.pdf")
+except:
+    pass
+
+try:
+    plotNLDs(OCL_Potel03, color=color_pallet[3])
+except:
+    pass
+
 
 plt.savefig("nld_RAINIER.pdf")
-
+plt.savefig("nld_RAINIER.png")
 
 ###############################
 
@@ -260,63 +201,56 @@ plt.setp(ax.get_xticklabels(), visible=False)
 # Plot data points with error bars
 
 
-gSF_true_all = np.loadtxt("Jint_Greg_mama_RIPL_gsf01/GSFTable_py.dat")
-gSF_true_tot = gSF_true_all[:,1] + gSF_true_all[:,2]
-gSF_true = np.array(list(zip(gSF_true_all[:,0],gSF_true_tot)))
-gSF_true_plot = ax.plot(gSF_true[:140,0],gSF_true[:140,1], "k-", label="gSF_true")
-
-# OCL_EB05_plot = plotData(OCL_EB05, dicEntry="strength", axis=ax)
-# OCL_Potel_rhotot_plot = plotData(OCL_Potel_rhotot, dicEntry="strength", fmt="--", axis=ax)
-# OCL_Potel_plot = plotData(OCL_Potel, dicEntry="strength", axis=ax)
-# OCL_Potelr10_plot = plotData(OCL_Potelr10, dicEntry="strength", axis=ax)
+gsf_obs = OCL_Potel01["gsf_input"]
+idSn = np.abs(gsf_obs[:,0]-Sn).argmin()
+gsf_obs_plot = ax.plot(gsf_obs[:idSn,0],gsf_obs[:idSn,1], "k-", label="gsf_obs")
 
 def plotGSFs(dataset, **kwarg):
     plotData(dataset, dicEntry="strength", axis=ax, **kwarg)
     plotData(dataset, dicEntry="trans", fmt="--", axis=ax, **kwarg)
-    ratio_gSF = calcRatioTrue(dataset,gSF_true, "strength")
+    ratio_gSF = calcRatioTrue(dataset,gsf_obs, "strength")
     ax2.errorbar(dataset["strength"][:,0], unumpy.nominal_values(ratio_gSF), yerr=unumpy.std_devs(ratio_gSF), markersize=4, linewidth=1.5, fmt='v-', label=dataset["label"], **kwarg)
     handles, labels = ax.get_legend_handles_labels()
     lgd1= ax.legend(handles, labels, fontsize="medium")
     return ratio_gSF
 
-plotGSFs(OCL_EB05, color=color_pallet[0])
-plt.savefig("gsf_RAINIER_0.pdf")
+# plotGSFs(OCL_EB05, color=color_pallet[0])
+# plt.savefig("gsf_RAINIER_0.pdf")
 
-ratio_gSF = plotGSFs(OCL_Potel_rhotot, color=color_pallet[1])
+plotGSFs(OCL_Potel01, color=color_pallet[1])
 plt.savefig("gsf_RAINIER_1.pdf")
 
-plotGSFs(OCL_Potel, color=color_pallet[2])
-plt.savefig("gsf_RAINIER_2.pdf")
+try:
+    plotGSFs(OCL_Potel02, color=color_pallet[2])
+    plt.savefig("gsf_RAINIER_2.pdf")
+except:
+    pass
 
-plotGSFs(OCL_Potelr10, color=color_pallet[3])
-plt.savefig("gsf_RAINIER_3.pdf")
+try:
+    plotGSFs(OCL_Potel03, color=color_pallet[3])
+    plt.savefig("gsf_RAINIER_3.pdf")
+except:
+    pass
 
 plt.savefig("gsf_RAINIER.pdf")
-
-###############################
-
-# plt.show()
-
+plt.savefig("gsf_RAINIER.png")
 
 ###############################
 
 # Get new, "corrected" nld and gSF
 # that can be set into RAINIER for the next iteration
-Sn = 6.534
-E_crit = 1.03755 # critical energy / last discrete level
-# E_fitmin = 2. # ignore data below 2 MeV -- arb. selection
 
-
-
-E_exp = OCL_Potel_rhotot["nld"][:,0]
-idE_crit = np.abs(E_exp-E_crit).argmin()
-E_exp = E_exp[idE_crit:]
+ratio_nld = calcRatioTrue(current_dataset,nld_init, "nld")
 y = unumpy.nominal_values(1/ratio_nld)[idE_crit:]
+
+ydiff = (y-1)
+ydiff /= 2 # try smaller change for better convergence
+y = 1+ydiff
+
 y_smooth = gaussian_filter1d(y, sigma=2)
 yerr = unumpy.std_devs(1/ratio_nld)[idE_crit:]
 
 # add constraint: no change a Sn
-E_exp = np.append(E_exp,Sn)
 y = np.append(y,1.)
 y_smooth = np.append(y_smooth,1.)
 yerr = np.append(yerr,1e-9)
@@ -330,18 +264,33 @@ yerr = np.append(yerr,1e-9)
 # fcorr_nld = interpolate.interp1d(E_exp, y_smooth)
 
 plt.figure()
-plt.errorbar(E_exp, y, yerr)
-xarr = np.linspace(E_crit,Sn)
-# plt.plot(xarr,fcorr_nld(xarr))
-plt.plot(E_exp, y_smooth)
+plt.errorbar(E_exp, y, yerr, label="extracted correction")
+plt.plot(E_exp, y_smooth, label="smoothed")
+plt.legend(loc="best")
+plt.xlabel(r"$E_x$ [MeV]")
+plt.ylabel("Correction factor")
+plt.savefig("nld_correction.png")
+
 # plt.show()
 
 # apply correction
-nld_init = rhoCT(E_exp,T=0.425,E0=-0.456)
-rho_new = y_smooth * nld_init
 plt.figure()
-plt.semilogy(E_exp, nld_init)
-plt.plot(E_exp,rho_new)
+rho_new = y_smooth * nld_init[:,1]
+
+# interpolate some values between last point in data and Sn
+E_interp = np.linspace(E_exp[-2],E_exp[-1],num=20)
+E_interp = np.concatenate((E_exp,E_interp[1:]))
+rho_new_interp = log_interp1d(E_exp,rho_new)
+rho_new = rho_new_interp(E_interp)
+
+plt.step(NLD_obs_binned[:,0], NLD_obs_binned[:,1], "--",
+             color="0.5", label="generated")
+plt.semilogy(nld_init[:,0], nld_init[:,1], label="exp. \"obs\"")
+plt.plot(E_interp,rho_new, "-", label="new")
+plt.legend(loc="best")
+plt.xlabel(r"$E_x$ [MeV]")
+plt.ylabel("nld")
+plt.savefig("nld_corrected.png")
 # plt.show()
 
 # Write to RAINIER
@@ -354,14 +303,15 @@ def sigma(U,A,a,E1, rmi_red=1):
     return np.sqrt(sigma2(U,A,a,E1, rmi_red=1))
 
 fname = "nld_new.dat"
-WriteRAINIERnldTable(fname, E_exp, rho_new, sigma(U=E_exp, A=240, a=25.16,E1=0.12), a=None)
+WriteRAINIERnldTable(fname, E_interp, rho_new, sigma(U=E_interp, A=240, a=25.16,E1=0.12), a=None)
+np.savetxt('nld_new.txt', np.c_[E_interp, rho_new], header="E[MeV] nld[MeV^-1]")
 
 ##########################################
 # repeat for gSF
 
 def getFullRatio(dataset):
-    ratio_gSF = calcRatioTrue(dataset,gSF_true, "strength")
-    ratio_trans = calcRatioTrue(dataset,gSF_true, "trans")
+    ratio_gSF = calcRatioTrue(dataset,gsf_obs, "strength")
+    ratio_trans = calcRatioTrue(dataset,gsf_obs, "trans")
     Eg = dataset["strength"][:,0]
     Eg_trans = dataset["trans"][:,0]
     Egsf_min = Eg[0]
@@ -379,11 +329,16 @@ def getFullRatio(dataset):
     return ratio_gSF_tot
 
 
-ratio_gSF = getFullRatio(OCL_Potel_rhotot)
-E_exp = OCL_Potel_rhotot["trans"][:,0]
+ratio_gSF = getFullRatio(current_dataset)
+
+gsf_input = current_dataset["gsf_input"]
+idE_Sn = np.abs(gsf_input[:,0]-Sn).argmin()
+gsf_input = gsf_input[:idE_Sn,:]
+
+E_exp = OCL_Potel01["trans"][:,0]
 idE_Sn = np.abs(E_exp-Sn).argmin()
 E_exp = E_exp[:idE_Sn]
-gsf_init = OCL_Potel_rhotot["trans"][:idE_Sn,1]
+
 y = unumpy.nominal_values(1/ratio_gSF)[:idE_Sn]
 yerr = unumpy.std_devs(1/ratio_gSF)[:idE_Sn]
 
@@ -393,7 +348,7 @@ yerr = unumpy.std_devs(1/ratio_gSF)[:idE_Sn]
 # print("popt_gsf", popt_gsf)
 
 plt.figure()
-plt.errorbar(E_exp, y, yerr)
+plt.errorbar(E_exp, y, yerr, label="correction")
 # xarr = np.linspace(0,Sn)
 # plt.plot(xarr,fcorr_gsf(xarr))
 
@@ -401,18 +356,31 @@ plt.errorbar(E_exp, y, yerr)
 # spl = UnivariateSpline(E_exp, y, w=1/yerr, k=4)
 # plt.plot(xarr,spl(xarr))
 y_smooth = gaussian_filter1d(y, sigma=2)
-plt.plot(E_exp,y_smooth)
+plt.plot(E_exp,y_smooth, label="smoothed")
+plt.legend(loc="best")
+plt.xlabel(r"$E_\gamma$ [MeV]")
+plt.ylabel("correction")
+plt.savefig("gsf_correction.png")
 
-# plt.show()
-
+# applt to gsf
 plt.figure()
-gsf_new = y_smooth * gsf_init
-plt.semilogy(E_exp, gsf_init)
-plt.semilogy(E_exp, gsf_new)
 
+gsf_input_interp = np.interp(E_exp,gsf_input[:,0],gsf_input[:,1])
+gsf_new = y_smooth * gsf_input_interp
+idSn = np.abs(gsf_obs[:,0]-Sn).argmin()
+plt.plot(gsf_obs[:idSn,0],gsf_obs[:idSn,1],
+         "--",color="0.5", label="exp \"obs\"")
+plt.semilogy(gsf_input[:,0], gsf_input[:,1], label="input")
+plt.semilogy(E_exp, gsf_new, label="new")
+plt.legend(loc="best")
+plt.xlabel(r"$E_\gamma$ [MeV]")
+plt.ylabel("gsf")
+plt.savefig("gsf_corrected.png")
+
+# export as asci
 data_all = list(zip(E_exp,gsf_new))
 np.savetxt('gsf_new.dat', data_all, header="E gsf_sum")
 
-plt.show()
+# plt.show()
 
 
