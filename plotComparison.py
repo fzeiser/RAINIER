@@ -297,7 +297,7 @@ plt.savefig("nld_corrected.png")
 def sigma2(U,A,a,E1, rmi_red=1):
     #cut-off parameters of EB05
     sigma2 = np.sqrt(rmi_red) * 0.0146*A**(5./3.) * ( 1. + np.sqrt(1. + 4.*a*(U-E1)) ) / (2.*a)
-    return np.sqrt(sigma2)
+    return sigma2
 
 def sigma(U,A,a,E1, rmi_red=1):
     return np.sqrt(sigma2(U,A,a,E1, rmi_red=1))
