@@ -1,7 +1,7 @@
 /********************* RAINIER l.kirsch 04/27/2017 start date *****************/
 /********************* version 1.2.0:   02/14/2018 add table+usr def models****/
 /********************* lekirsch@lbl.gov ***************************************/
-//  ____________________________________________ 
+//  ____________________________________________
 // |* * * * * * * *|############################|
 // | * * * * * * * |                            |
 // |* * * * * * * *|############################|
@@ -19,13 +19,13 @@
 // Randomizer of Assorted Initial Nuclear Intensities and Emissions of Radiation
 // Follow readme to run in bash
 // A) via run_RAINIER.sh script
-// B) direct; but need to copy the settings.h file to the RAINIER directory 
+// B) direct; but need to copy the settings.h file to the RAINIER directory
 // $ root RAINIER.C++
 
 // doubles, ints, and bools marked with prescript "d", "n", and "b" respectively
 // arrays marked with prescript "a"
 // globals marked with "g_" are accessible after the run, so are the functions
-// full lowercase named variables (i.e. no CamelCase) are index variables 
+// full lowercase named variables (i.e. no CamelCase) are index variables
 // precompiler commands "#" make things run fast when unnecessary items are out
 // - better than 40 "if" statements for every call
 // - also makes src code clear as to what contributes and what doesn't
@@ -39,13 +39,13 @@
 #include <string.h>
 #include <sstream>
 #include <stdlib.h>
-#include <iomanip> 
+#include <iomanip>
 #include <vector>
 #include <numeric>
 #include "math.h"
 #include "TTimeStamp.h"
 using namespace std;
-#include "TRandom2.h" 
+#include "TRandom2.h"
 // 2=Tausworthe is faster and smaller than 3=Mersenne Twister (MT19937)
 // search and replace "TRandom2" to "TRandom3" to change PRNG
 #include "TH1D.h"
@@ -103,7 +103,7 @@ void ReadDisInputFile() {
     getline(lvlFile, sNucSearchLine); // Header
     istringstream issHeader(sNucSearchLine);
     issHeader >> sChem >> nA >> nZ >> nLvlTot;
-    if(nA == g_nAMass && nZ == g_nZ) 
+    if(nA == g_nAMass && nZ == g_nZ)
       {bFoundNuc = true; cout << "Nucleus: " << endl << sNucSearchLine << endl;}
   }
   if(nLvlTot < 2) { cerr << "err: No levels, check z file" << endl; cin.get(); }
@@ -114,16 +114,16 @@ void ReadDisInputFile() {
     istringstream issLvl(sLvlLine);
     int nLvl, nLvlPar, nLvlGam;
     double dLvlEner, dLvlSp, dLvlT12;
-    issLvl >> nLvl >> dLvlEner >> dLvlSp >> nLvlPar >> dLvlT12 >> nLvlGam; 
+    issLvl >> nLvl >> dLvlEner >> dLvlSp >> nLvlPar >> dLvlT12 >> nLvlGam;
     nLvl--; // to match convention of ground state is lvl 0
 
     if(nLvlPar == -1) nLvlPar = 0; // 1=+, 0=- diff convention dicebox and talys
-    if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch" << endl; 
+    if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch" << endl;
     if(int(dLvlT12) == dLvlT12) {
 
       // sometimes no halflife meas
       nLvlGam = dLvlT12; // missing half-life
-      dLvlT12 = 999; 
+      dLvlT12 = 999;
     }
 
     g_adDisEne[lvl] = dLvlEner;
@@ -139,7 +139,7 @@ void ReadDisInputFile() {
       istringstream issGam(sGamLine);
       int nGamToLvl;
       double dGamBR, dGamICC, dGamE, dPg;
-      issGam >> nGamToLvl >> dGamE >> dPg >> dGamBR >> dGamICC; 
+      issGam >> nGamToLvl >> dGamE >> dPg >> dGamBR >> dGamICC;
       nGamToLvl--; // to match convention of ground state is lvl 0
 
       dTotBR += dGamBR;
@@ -155,7 +155,7 @@ void ReadDisInputFile() {
   } // lvl
   lvlFile.close();
 
-  g_dECrit = g_adDisEne[g_nDisLvlMax-1];   
+  g_dECrit = g_adDisEne[g_nDisLvlMax-1];
   #ifdef bForceBinNum
   g_dConESpac = (g_dExIMax - g_dECrit) / double(g_nConEBin);
   #else
@@ -169,12 +169,12 @@ void PrintDisLvl() {
     // levels
     cout << lvl << ":\t " << g_adDisEne[lvl] << "   " << g_adDisSp[lvl]
       << (g_anDisPar[lvl]==1?"+":"-")  // careful dicebox flips parity
-      << " "; 
+      << " ";
       if(g_adDisT12[lvl] < 1e9) cout << g_adDisT12[lvl] << " fs" << endl;
       else cout << "N/A" << endl; // lifetime not measured
     // gammas
     for(int gam=0; gam<g_anDisGam[lvl]; gam++) {
-      cout << "   " << g_anDisGamToLvl[lvl][gam] << " : " 
+      cout << "   " << g_anDisGamToLvl[lvl][gam] << " : "
         << g_adDisGamBR[lvl][gam] << endl;
     } // gam
   } // lvl
@@ -185,7 +185,7 @@ TH3D *g_h3PopDist;
 /////////////////////// TALYS Rxn Population File //////////////////////////////
 void ReadPopFile() {
   cout << "Reading Population File" << endl;
-  // copy the "Population of Z= 60 N= 84 (144Nd) before decay" section 
+  // copy the "Population of Z= 60 N= 84 (144Nd) before decay" section
   // from TALYS File:
   //   projectile p
   //   element nd
@@ -227,18 +227,18 @@ void ReadPopFile() {
           adPop[nBin][s][par] = dPop;
         } // read par
       #endif //bParPop_Equipar
-    } // read J     
+    } // read J
   } // read E
 
   // need arrays for TH3D constructor; different from TH2D
   // arrays give the lower-edges; therefor the size must be nbin+1
-  const double abinPar[3]={0,1,2}; // parity bins; positive:1 and negative:0 
+  const double abinPar[3]={0,1,2}; // parity bins; positive:1 and negative:0
   double abinSpPop[g_nSpPopIBin+1];
   for(int binJ=0; binJ<=g_nSpPopIBin; binJ++){
     abinSpPop[binJ] = binJ;
   }
-  g_h3PopDist = new TH3D("h3PopDist","h3PopDist", 
-    g_nSpPopIBin, abinSpPop, g_nExPopI-1, adEx, 2, abinPar); 
+  g_h3PopDist = new TH3D("h3PopDist","h3PopDist",
+    g_nSpPopIBin, abinSpPop, g_nExPopI-1, adEx, 2, abinPar);
 
   for(int binE=1; binE<g_nExPopI; binE++) {
     for(int binJ=1; binJ<=g_nSpPopIBin; binJ++) {
@@ -263,7 +263,7 @@ double GetEff(double dEx) {
   #endif
   #ifdef bLD_Table
   double dEff = dEx - g_dDelta;
-  #endif  
+  #endif
   if(dEff < 0.0) dEff = 0.00000001;
   return dEff;
 } // GetEff
@@ -372,7 +372,7 @@ double GetDensity(double dEx, double dSp, int nPar) {
 
   double dSpDen = (dSp + 0.5) * exp(-pow(dSp + 0.5, 2) / (2 * dSpinCut2))
    / dSpinCut2;
-  
+
   #ifdef bPar_Equipar
   int nParity = nPar; // basically unused in this model
   double dParDen = 0.5;
@@ -421,10 +421,10 @@ int EJP(int ex, int spb, int par) { // index for Energy E, Spin J, Parity P
 
 double GetInBinE(int nReal, int nConEx, int nSpb, int nPar, int nLvlInBin) {
   TRandom2 ranInBinE(1 + // have seen issues with 0 seed
-    nPar + 
-    nConEx    * 2 + 
+    nPar +
+    nConEx    * 2 +
     nReal     * 2 * g_nConEBin +
-    nSpb      * 2 * g_nConEBin * g_nReal + 
+    nSpb      * 2 * g_nConEBin * g_nReal +
     nLvlInBin * 2 * g_nConEBin * g_nReal * g_nConSpbMax);
   double dInBinE = g_adConExCen[nConEx];
   dInBinE += (-g_dConESpac / 2.0 + ranInBinE.Uniform(g_dConESpac));
@@ -439,8 +439,8 @@ void BuildConstructed(int nReal) {
   delete[] g_anConLvl;
   delete[] g_anConCumul;
   g_adConExCen = new double[g_nConEBin]; // center energy of the bin
-  g_anConLvl   = new int   [g_nConEBin * g_nConSpbMax * 2]; 
-  g_anConCumul = new int   [g_nConEBin * g_nConSpbMax * 2]; 
+  g_anConLvl   = new int   [g_nConEBin * g_nConSpbMax * 2];
+  g_anConCumul = new int   [g_nConEBin * g_nConSpbMax * 2];
 
   TRandom2 ranLvlGen(1 + nReal);
   g_nConLvlTot = g_nDisLvlMax; // include discrete lvls below
@@ -448,19 +448,19 @@ void BuildConstructed(int nReal) {
 
   #ifdef bPoisson
   for(int ex=0; ex<g_nConEBin; ex++) {
-    g_adConExCen[ex] = g_dECrit + (ex + 0.5) * g_dConESpac; 
+    g_adConExCen[ex] = g_dECrit + (ex + 0.5) * g_dConESpac;
     // bottom of bin ex=0 equals g_dECrit: no gap or overlap with discrete
     // constructed in-bin-energies are discretized by gaussian seeds
 
     for(int spb=0; spb<g_nConSpbMax; spb++) {
       for(int par=0; par<2; par++) {
-        
+
         double dSp; // integer or half integer determination for density
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
 
         double dAvgNumLev = g_dConESpac * GetDensity(g_adConExCen[ex],dSp,par);
         int nRanNumLvl = ranLvlGen.Poisson(dAvgNumLev); // integer poisson
-        g_anConLvl[EJP(ex,spb,par)] = nRanNumLvl; 
+        g_anConLvl[EJP(ex,spb,par)] = nRanNumLvl;
         if(nRanNumLvl > g_nConMaxLvlBin) g_nConMaxLvlBin = nRanNumLvl;
 
         g_nConLvlTot += g_anConLvl[EJP(ex,spb,par)];
@@ -481,7 +481,7 @@ void BuildConstructed(int nReal) {
       if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
 
       ///// initialize E bins to 0 /////
-      for(int ex=0; ex<g_nConEBin; ex++) { 
+      for(int ex=0; ex<g_nConEBin; ex++) {
         g_anConLvl[EJP(ex,spb,par)] = 0;
       } // ex
 
@@ -494,16 +494,16 @@ void BuildConstructed(int nReal) {
         if(ex == 0)
           adExpCumulCon[ex] = GetDensity(dEx, dSp, par) * g_dConESpac;
         else // ex != 0
-          adExpCumulCon[ex] = GetDensity(dEx, dSp, par) * g_dConESpac 
+          adExpCumulCon[ex] = GetDensity(dEx, dSp, par) * g_dConESpac
             + adExpCumulCon[ex-1];
       } // ex
 
       ///// Level assignment /////
-      double dWigSampleSum = 0.0; 
+      double dWigSampleSum = 0.0;
       // expectation value of avg dist between neighboring levels is 1
       for(int ex=0; ex<g_nConEBin; ex++) {
         while( dWigSampleSum < adExpCumulCon[ex] ) {
-          dWigSampleSum += 2.0 / sqrt(g_dPi) 
+          dWigSampleSum += 2.0 / sqrt(g_dPi)
             * sqrt( -log( ranLvlGen.Uniform(1.0) ) );
           g_anConLvl[EJP(ex,spb,par)]++;
         } // WigSampleSum < ExpCumulCon
@@ -539,47 +539,47 @@ void PrintConLvl() {
     for(int spb=0; spb<=nSpbPrint; spb++) {
       cout << g_anConLvl[EJP(ex,spb,par)] << "|";
     } // sp bin
-    // printing energy of every level in bin would be so many more lines 
+    // printing energy of every level in bin would be so many more lines
     // but could be done with something like:
-    // for(int lvl=0; lvl<g_anConLvl[EJP(ex,spb,par)]; lvl++) 
+    // for(int lvl=0; lvl<g_anConLvl[EJP(ex,spb,par)]; lvl++)
     //   cout << GetInBinE(ex,spb,par,lvl) << endl;
     cout << scientific << endl;
-  } // ex 
+  } // ex
   cout << "Total Number of Levels = " << g_nConLvlTot << endl;
 } // PrintConLvl
 
 /////////////////// Transistion Type ///////////////////////////////////////////
 int GetTransType(int nSpbI, int nParI, int nSpbF, int nParF) {
   // only integer spins
-  int nTransType = 0; 
+  int nTransType = 0;
     // 0 No trans; 1 Pure E1; 2 Mixed M1+E2; 3 Pure M1; 4 Pure E2
   int ndSpb = TMath::Abs(nSpbF - nSpbI);
   int ndPar = TMath::Abs(nParF - nParI);
 
-  if(nSpbF < 0 || nSpbF >= g_nConSpbMax) return 0; // not possible 
+  if(nSpbF < 0 || nSpbF >= g_nConSpbMax) return 0; // not possible
   if(nSpbI < 0 ) cerr << "err: Negative input spins" << endl;
 
-  // there are faster ways to compute transistion type than what is below, 
-  // but the function is not called that many times 
+  // there are faster ways to compute transistion type than what is below,
+  // but the function is not called that many times
   // so its better to be fully explicit for clarity - trust me u dont want gotos
   // the only real head-scratchers occur when spin bin 0 is involved
 
   if(g_bIsEvenA) {
-    if(ndSpb == 0) { 
-      if(nSpbF > 0 && nSpbI > 0) { 
+    if(ndSpb == 0) {
+      if(nSpbF > 0 && nSpbI > 0) {
         if(ndPar == 0) {
           nTransType = 2; // M1+E2
         } else {
           nTransType = 1; // E1
         }
-      } else { 
+      } else {
         nTransType = 0; // no 0 -> 0 with gammas, ignore E0 Internal Conversion
       }
-    } else if(ndSpb == 1) { 
+    } else if(ndSpb == 1) {
       if(nSpbF > 0 && nSpbI > 0) { // triangle check
-        if(ndPar == 0) { 
+        if(ndPar == 0) {
           nTransType = 2; // M1+E2
-        } else { 
+        } else {
           nTransType = 1; // E1
         }
       } else {
@@ -595,7 +595,7 @@ int GetTransType(int nSpbI, int nParI, int nSpbF, int nParF) {
       } else {
         nTransType = 0; // no M2,E3
       }
-    } else { // ndSpb > 2 
+    } else { // ndSpb > 2
       nTransType = 0; // no Octupole
     }
   } else { //////////////////// odd A //////////////////////////////////////////
@@ -614,7 +614,7 @@ int GetTransType(int nSpbI, int nParI, int nSpbF, int nParF) {
           nTransType = 1; // 1/2+ -> 1/2- E1
         }
       }
-    } else if(ndSpb == 1) { 
+    } else if(ndSpb == 1) {
       if(nSpbF > 0 && nSpbI > 0) { // triangle check
         if(ndPar == 0) {
           nTransType = 2; // M1+E2
@@ -623,7 +623,7 @@ int GetTransType(int nSpbI, int nParI, int nSpbF, int nParF) {
         }
       } else {
         if(ndPar == 0) { // 1/2+ -> 3/2+ can be quadrupole unlike 0+ -> 1-
-          nTransType = 2; // M1+E2 
+          nTransType = 2; // M1+E2
         } else { // 1/2+ -> 3/2- , etc.
           nTransType = 1; // E1
         }
@@ -640,7 +640,7 @@ int GetTransType(int nSpbI, int nParI, int nSpbF, int nParF) {
   } // A determination
 
   return nTransType;
-} // GetTransType 
+} // GetTransType
 
 /////////////////////// Gamma Strength * Eg^(2L+1) /////////////////////////////
 // Physical Constants
@@ -656,7 +656,7 @@ double GetTemp(double dEx) {
   return sqrt(dEff / dLDa);
 } // GetTemp
 
-double GetStrE1(double dEx, double dEg) { 
+double GetStrE1(double dEx, double dEg) {
   double dStr = 0.0;
 
   #ifdef bGSF_Table
@@ -665,7 +665,7 @@ double GetStrE1(double dEx, double dEg) {
   double dTemp = GetTemp(dEx - dEg);
 
   for(int set=0; set<g_nParE1; set++) { // sum over split dipoles in applicable
-    double dGam = g_adGamE1[set] * (dEg*dEg + g_d4Pi2 * dTemp*dTemp) 
+    double dGam = g_adGamE1[set] * (dEg*dEg + g_d4Pi2 * dTemp*dTemp)
       / (g_adEneE1[set]*g_adEneE1[set]); // energy dependent width
 
     #ifdef bE1_GenLor // Kopecky and Uhl Gen Lorentzian;
@@ -678,9 +678,9 @@ double GetStrE1(double dEx, double dEg) {
     } // A > 148
     #endif
 
-    double dTerm1 = dEg * dGam 
+    double dTerm1 = dEg * dGam
       / ( pow( (dEg*dEg - g_adEneE1[set]*g_adEneE1[set]),2) + pow(dEg*dGam,2) );
-    double dTerm2 = 0.7 * g_adGamE1[set] * g_d4Pi2 * dTemp*dTemp 
+    double dTerm2 = 0.7 * g_adGamE1[set] * g_d4Pi2 * dTemp*dTemp
       / pow(g_adEneE1[set],5);
       // non zero limit, F=0.7 is the fermi liquid quasiparticle collision fact
     double dTerm = dTerm1 + dTerm2;
@@ -700,7 +700,7 @@ double GetStrE1(double dEx, double dEg) {
     double dTerm = dEg * g_adGamE1[set]
       / ( pow(dEg*dEg - g_adEneE1[set]*g_adEneE1[set], 2)
       + pow(dEg*g_adGamE1[set], 2) );
-    #endif    
+    #endif
 
     #ifdef bE1_UsrDef // user defined; includes multiple resonances
     // edit as you please
@@ -726,7 +726,7 @@ double GetStrM1(double dEg) {
   for(int set=0; set<g_nParM1; set++) {
     #ifdef bM1_StdLor
     dStr += g_dKX1 * g_adSigM1[set] * dEg * g_adGamM1[set]*g_adGamM1[set]
-      / ( pow(dEg*dEg - g_adEneM1[set]*g_adEneM1[set], 2) 
+      / ( pow(dEg*dEg - g_adEneM1[set]*g_adEneM1[set], 2)
       + pow(dEg*g_adGamM1[set], 2) );
     #endif
 
@@ -738,7 +738,7 @@ double GetStrM1(double dEg) {
     #endif
 
   } // M1 parameter set
-    
+
   #ifdef bM1StrUpbend
   double dUpbend = g_dUpbendM1Const * exp(-g_dUpbendM1Exp * dEg);
   dStr += dUpbend;
@@ -756,14 +756,14 @@ double GetStrM1(double dEg) {
 double GetStrE2(double dEg) {
   #ifdef bE2_StdLor
   // Standard Lorentzian
-  double dStr = g_dKX2 * g_dSigE2 * g_dGamE2*g_dGamE2 
+  double dStr = g_dKX2 * g_dSigE2 * g_dGamE2*g_dGamE2
     / (dEg * (pow(dEg*dEg - g_dEneE2*g_dEneE2,2) + pow(dEg*g_dGamE2,2)));
   // divide by Eg so units work out: TALYS formula units don't work
   #endif
 
   #ifdef bE2_UsrDef // user defined
   // edit as you please
-  double dStr = g_dKX2 * g_dSigE2 * g_dGamE2*g_dGamE2 
+  double dStr = g_dKX2 * g_dSigE2 * g_dGamE2*g_dGamE2
     / (dEg * (pow(dEg*dEg - g_dEneE2*g_dEneE2,2) + pow(dEg*g_dGamE2,2)));
   #endif
 
@@ -835,7 +835,7 @@ double GetRanChi2(TRandom2 &ran, double dnu) {
 } // GetRanChi2
 
 double GetStr(double dEx, double dEg, int nTransType, double &dMixDelta2,
-  TRandom2 &ranStr) { 
+  TRandom2 &ranStr) {
   // returns sum_XL( Str_XL * Eg^(2L+1) )
   dMixDelta2 = 0.0;
   switch(nTransType) {
@@ -853,7 +853,7 @@ double GetStr(double dEx, double dEg, int nTransType, double &dMixDelta2,
               #endif
               return dFluct * GetStrE1(dEx, dEg);
             }
-    case 2: { 
+    case 2: {
               // both decay branches fluctuate independently
               // int nX = 1, nL = 1;
               #ifdef bWFD_PTD
@@ -880,12 +880,12 @@ double GetStr(double dEx, double dEg, int nTransType, double &dMixDelta2,
               double dFluctE2 = 1.0; // PT fluct off
               #endif
               double dStrE2 = dFluctE2 * GetStrE2(dEg);
-              
+
               // delta = <I1||E2||I0> / <I1||M1||I0>; I0,1 = init,final w.f.
-              //       = sqrt(GamE2 / GamM1) 
+              //       = sqrt(GamE2 / GamM1)
               //       = sqrt(strE2 * Eg^5 / strM1 * Eg^3)
               dMixDelta2 = dStrE2 / dStrM1; // fact of Eg in GetStrXL
-              return dStrM1 + dStrE2; 
+              return dStrM1 + dStrE2;
             }
     case 3: { // int nX = 1, nL = 1;
               #ifdef bWFD_PTD
@@ -925,17 +925,17 @@ double GetBrICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
   switch(nTransMade) {
     case 0: return 0.0; break;
     case 1: nSuccess = system(
-      Form("%s/%s -Z %d -g %f -L E1 -w %s > oAlpha.briccs", 
+      Form("%s/%s -Z %d -g %f -L E1 -w %s > oAlpha.briccs",
       g_sRAINIERPath.c_str(),cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break; // MeV
     case 2: nSuccess = system(
-      Form("%s/%s -Z %d -g %f -L M1+E2 -d %f -w %s > oAlpha.briccs", 
-      g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) ); 
+      Form("%s/%s -Z %d -g %f -L M1+E2 -d %f -w %s > oAlpha.briccs",
+      g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, sqrt(dMixDelta2), g_sBrIccModel) );
       nReadLine = 11; break;
     case 3: nSuccess = system(
-      Form("%s/%s -Z %d -g %f -L M1 -w %s > oAlpha.briccs", 
+      Form("%s/%s -Z %d -g %f -L M1 -w %s > oAlpha.briccs",
       g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     case 4: nSuccess = system(
-      Form("%s/%s -Z %d -g %f -L E2 -w %s > oAlpha.briccs", 
+      Form("%s/%s -Z %d -g %f -L E2 -w %s > oAlpha.briccs",
       g_sRAINIERPath.c_str(), cbriccs, g_nZ, dEg*1000, g_sBrIccModel) ); nReadLine = 8; break;
     default: cerr << "err: impossible transistion" << endl;
   } // transistion
@@ -988,8 +988,8 @@ double GetICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
   return 0.0;
   #else
   double dEg1 = dEg; // to avoid unused warnings
-  int nTransMade1 = nTransMade; 
-  double dMixDelta21 = dMixDelta2; 
+  int nTransMade1 = nTransMade;
+  double dMixDelta21 = dMixDelta2;
   return 0.0;
   #endif
 } // GetICC
@@ -997,8 +997,8 @@ double GetICC(double dEg, int nTransMade=1, double dMixDelta2=0.0) {
 ///////////////// Calculate Widths /////////////////////////////////////////////
 double GetWidth(int nExI, int nSpbI, int nParI, int nLvlInBinI, int nReal,
   double *adConWid, double *adDisWid, TRandom2 *arConState) {
-  
-  TRandom2 ranStr(1 + nReal + g_nReal * ( g_anConCumul[EJP(nExI,nSpbI,nParI)] 
+
+  TRandom2 ranStr(1 + nReal + g_nReal * ( g_anConCumul[EJP(nExI,nSpbI,nParI)]
     - g_anConLvl[EJP(nExI,nSpbI,nParI)] + nLvlInBinI )); // seed with lvl num
 
   double dTotWid = 0.0;
@@ -1009,7 +1009,7 @@ double GetWidth(int nExI, int nSpbI, int nParI, int nLvlInBinI, int nReal,
     double dExI;
     if( nExI == (g_nConEBin - 1) )
       dExI = g_adConExCen[nExI] + 0.5 * g_dConESpac; // start top of 1st bin
-    else 
+    else
       dExI = g_adConExCen[nExI];
     #else
     //double dExI = g_adConExCen[nExI]; // fast, good approximation
@@ -1027,13 +1027,13 @@ double GetWidth(int nExI, int nSpbI, int nParI, int nLvlInBinI, int nReal,
         int nTransType = GetTransType(nSpbI,nParI,spb,par);
         if(nTransType) { // possible
           for(int ex=0; ex<nExI; ex++) {
-            // Could look at transisitions within same energy bin, 
-            // but so tiny effect. Would have to GetInBinE() of both in and 
-            // out state so that we don't accidentally go up in energy, 
+            // Could look at transisitions within same energy bin,
+            // but so tiny effect. Would have to GetInBinE() of both in and
+            // out state so that we don't accidentally go up in energy,
 
             int nLvlTrans = g_anConLvl[EJP(ex,spb,par)]; // #lvls in final bin
             if(nLvlTrans) { // might save some flops by ignoring empties
-  
+
               double dExF = g_adConExCen[ex];
                 // could get precise E but takes comp time, hardly effects str
               double dEg = dExI - dExF;
@@ -1047,7 +1047,7 @@ double GetWidth(int nExI, int nSpbI, int nParI, int nLvlInBinI, int nReal,
                   GetStr(dExI, dEg, nTransType, dMixDelta2, ranStr);
                 dStr += dStrTmp * (1.0 + GetICC(dEg,nTransType,dMixDelta2));
               } // outlvl
-  
+
               adConWid[EJP(ex,spb,par)] = dStr * dLvlSpac;
               dTotWid += dStr * dLvlSpac;
             } // final bin has lvls
@@ -1078,7 +1078,7 @@ double GetWidth(int nExI, int nSpbI, int nParI, int nLvlInBinI, int nReal,
         dTotWid += dStr * dLvlSpac;
       } // possible
     } // discrete lvl
-  } else cerr << "err: Requesting discrete width" << endl; 
+  } else cerr << "err: Requesting discrete width" << endl;
   return dTotWid;
 } // GetWidth
 
@@ -1090,7 +1090,7 @@ double GetDecayTime(double dTotWid, TRandom2 &ranEv) {
 }
 
 ////////////////////////// Take Step ///////////////////////////////////////////
-bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin, 
+bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
   int &nTransMade, double &dMixDelta2, double dTotWid, int nReal,
   double *adConWid, double *adDisWid, TRandom2 *arConState, TRandom2 &ranEv) {
   // TakeStep will change variables with &
@@ -1105,7 +1105,7 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
 
   /////// in constructed scheme ///////
   if(nConEx >= 0) {
-    double dSp; 
+    double dSp;
     if(g_bIsEvenA){ dSp = nSpb; } else { dSp = nSpb + 0.5; }
     #ifdef bExSingle
     double dExI;
@@ -1160,8 +1160,8 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
                 nToSpb = spb;
                 nToPar = par;
                 nTransMade = nTransType;
-                // need to backtrack width sum and find out which individual 
-                // level in EJP bin it decayed to since many levels in a bin 
+                // need to backtrack width sum and find out which individual
+                // level in EJP bin it decayed to since many levels in a bin
                 // each with random width according to PT distribution
                 dWidCumulative -= dConWid;
                 bool bFoundLvlInBin = false;
@@ -1177,7 +1177,7 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
                     double dMixDelta2Tmp;
                     double dStrTmp = // need to get delta2
                       GetStr(dExI, dEg, nTransType, dMixDelta2Tmp, ranStr);
-                    double dStr = dStrTmp * (1.0 + 
+                    double dStr = dStrTmp * (1.0 +
                       GetICC(dEg,nTransType,dMixDelta2Tmp));
                     dWidCumulative += dStr * dLvlSpac;
                     if(dWidCumulative >= dRanWid) {
@@ -1226,13 +1226,13 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
 
   // this is where user errors usually turn up the most
   if(nToSpb < 0 || nToPar < 0 || nToLvlInBin < 0 ) { // error check
-    cerr << endl << "err: JP: from " << endl 
-         << nSpb << (nPar?"+":"-") << ", Lvl: " << nDisEx << ", ConBin: " 
+    cerr << endl << "err: JP: from " << endl
+         << nSpb << (nPar?"+":"-") << ", Lvl: " << nDisEx << ", ConBin: "
          << nConEx << ";" << nLvlInBin << endl << "To " << endl
          << nToSpb << (nToPar?"+":"-") << ", Lvl: " << nToDisEx << ", ConBin: "
-         << nToConEx << ";" << nToLvlInBin << endl 
-         << "Likely branching ratios from file don't add to 1.000000" << endl 
-         << "Check level " << nDisEx << " in " << "zFile" << " manually." 
+         << nToConEx << ";" << nToLvlInBin << endl
+         << "Likely branching ratios from file don't add to 1.000000" << endl
+         << "Check level " << nDisEx << " in " << "zFile" << " manually."
          << endl;
          // else write code to normalize
     return false;
@@ -1266,7 +1266,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   // one starting state
   #ifdef bForceBinNum
   nExI = g_nConEBin - 1;
-  #else 
+  #else
   double dExI = g_dExIMax;
   nExI = round( (dExI - g_dECrit) / g_dConESpac );
   #endif
@@ -1302,7 +1302,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
             }
           } // match E
         } // lvl
-        if( !bDisBinFound ) cerr << "err: no discrete match @ " << dExI 
+        if( !bDisBinFound ) cerr << "err: no discrete match @ " << dExI
                                  << " MeV, J/pi= " << nSpbI << "," << nParI << endl;
         if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
         else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
@@ -1319,11 +1319,11 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
           nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
           break; // states
         }
-        else { 
+        else {
           cerr << "\n" << "err: No level to populate for Ex=" << dExI
-          << "\n check spin-parity of generated continuum level vs population from bExSelect" 
+          << "\n check spin-parity of generated continuum level vs population from bExSelect"
           << endl;
-        } 
+        }
       } // continuum
     } // BR > RanState
   } // state
@@ -1371,7 +1371,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
     #endif
 
     #ifdef bJIGaus
-    nSpbI = ranEv.Gaus(g_dJIMean,g_dJIWid); 
+    nSpbI = ranEv.Gaus(g_dJIMean,g_dJIWid);
     if(nSpbI<0) nSpbI = 0; // positive gaussian
     #endif
 
@@ -1380,14 +1380,14 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
     bool bFoundLvl = false;
     while(!bFoundLvl && nAttempt < nMaxAttempt){ // dont pop not existent lvls
       nAttempt++;
-      nExI = round( (dExIMean - g_dECrit + ranEv.Gaus(0.0, dExISpread) ) 
+      nExI = round( (dExIMean - g_dECrit + ranEv.Gaus(0.0, dExISpread) )
         / g_dConESpac);
       if(nExI > g_nConEBin) cerr << "err: ExI above constructed max" << endl;
       if(nExI < 0) cerr << "err: ExI below constructed scheme" << endl;
 
       int nLvlAvail = g_anConLvl[EJP(nExI,nSpbI,nParI)];
       if(nLvlAvail > 0) {
-        nLvlInBinI = ranEv.Integer(nLvlAvail); 
+        nLvlInBinI = ranEv.Integer(nLvlAvail);
         bFoundLvl = true;
         bFoundSpin = true;
       } // lvl avail
@@ -1404,7 +1404,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   // if no level in corresponding bin, searches nearby E bins
   // - not much more you can do when matching continuum and discrete physics
   double dSp = 0.0, dEx = 0.0;
-  double dPopIntegral = g_h3PopDist->Integral(); // could calc outside 
+  double dPopIntegral = g_h3PopDist->Integral(); // could calc outside
   bool bLvlMatch = false;
 
   // find a lvl from the histogram:
@@ -1447,8 +1447,8 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
           } else { // is constructed
             dEx = dLowEBdy + ranEv.Uniform(dUpEBdy - dLowEBdy);
             #ifdef bParPop_Equipar
-              nParI = ranEv.Integer(2); // equal positive:1 and negative:0 
-            #else 
+              nParI = ranEv.Integer(2); // equal positive:1 and negative:0
+            #else
               nParI = binPar-1; // selected through the loop
             #endif // bParPop_Equipar
             nSpbI = int(dSp); // should work for both even and odd A
@@ -1489,7 +1489,7 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
     } // bin J
   } // bin E
   if(!bEJLvlSuggested) cerr << "err: lvl not suggested" << endl;
-  if(!bLvlMatch) cerr << "err: lvl not found" << endl;  
+  if(!bLvlMatch) cerr << "err: lvl not found" << endl;
   #endif // large swath of EJP
 } // GetExI
 
@@ -1507,7 +1507,7 @@ void InitFn() {
   fnGSFTot = new TF1("fnGSFTot", "GetStrE1([0],x)/x**3 + GetStrM1(x)/x**3 + GetStrE2(x)/x**5",0,20);
 
   double dEx = 0.5 * g_dExIMax; // spincut is slowly varying fn of E
-  g_hJIntrins = new TH1D("hJIntrins","Underlying J Dist", 
+  g_hJIntrins = new TH1D("hJIntrins","Underlying J Dist",
     int(g_dPlotSpMax), 0.0, int(g_dPlotSpMax) );
   double dSpinCut2 = GetSpinCut2(dEx);
   for(int spb=0; spb<int(g_dPlotSpMax); spb++) {
@@ -1523,7 +1523,7 @@ void InitFn() {
   double dspStart=0; // startSpin to plot
   if(g_bIsEvenA){ dspStart=0; } else { dspStart+=0.5; }
   g_h2JIntrins = new TH2D("h2JIntrins","Underlying J Dist for E>E_crit",
-                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6+1), 
+                          g_dPlotSpMax+1,dspStart,int(g_dPlotSpMax+0.6+1),
                           g_nConEBin, g_dECrit, g_dExIMax);
 
   double adJInt[int(g_dPlotSpMax+0.6+1)]; // densities for the underlying J
@@ -1532,13 +1532,13 @@ void InitFn() {
   for(int ex=0; ex<g_nConEBin; ex++) {
     adJIntNorm = 0;
     // Get density adJInt for each spin
-    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_dPlotSpMax; spb++) {
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] = GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
         adJIntNorm += adJInt[spb];
     }
     // Normalize for each Ex bin
-    for(int spb=0; spb<=g_dPlotSpMax; spb++) {     
+    for(int spb=0; spb<=g_dPlotSpMax; spb++) {
         if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
         adJInt[spb] /= adJIntNorm;
         g_h2JIntrins->Fill(dSp,g_adConExCen[ex],adJInt[spb]);
@@ -1548,6 +1548,23 @@ void InitFn() {
   for(int nbin=0; nbin<g_h2JIntrins->GetSize()+1; nbin++){
     g_h2JIntrins->SetBinError(nbin,0);
   }
+
+// save continuum nld to file
+TString smyFile = "NLDcont.dat";
+ofstream ofNLD;
+ofNLD.open(smyFile.Data());
+ofNLD << "#Energy \t NLD" << endl;
+for(int ex=0; ex<g_nConEBin; ex++) {
+  double energy = g_adConExCen[ex];
+  double rho = 0;
+  // Get density adJInt for each spin
+  for(int spb=0; spb<=g_nConSpbMax; spb++) {
+      if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
+      rho += GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
+  }
+  ofNLD << energy << "\t" << rho << endl;
+}
+
 
 } // InitFn
 
@@ -1604,6 +1621,48 @@ double GetGg(double dExcs, double dSpcs, int nParcs, int nReal, int nBins=1) {
   return dGgMean;
 }
 
+double GetMyGg(double dExcs=6.543, double dSpcs=0, int nParcs=0, int nReal=0, int nBins=1, int MaxBins=20) {
+  // initalize arrays to pass to GetWidth
+  double *adDisWid;
+  adDisWid = new double[g_nDisLvlMax]; // width to each discrete lvl
+  double *adConWid; // width to each EJP bin (summed over in-bin lvls)
+  adConWid   = new double  [g_nConEBin * g_nConSpbMax * 2](); // 0 init
+  TRandom2 *arConState; // TRandom2 state for randoms
+  arConState = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
+
+  int nSpcs = int(dSpcs);
+  int nExBin = GetContExBin(dExcs);
+  int nCSsum = 0;
+  double dGg = 0;
+  for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
+    nCSsum += g_anConLvl[EJP(nExb,nSpcs,nParcs)]; // + #continuum states in a bin
+  }
+  vector<double> vGg;
+  vGg.reserve(nCSsum);
+
+  for (int nExb=nExBin-nBins/2;nExb<nExBin+(nBins-1)/2+1;nExb++){
+    int nCS = g_anConLvl[EJP(nExb,nSpcs,nParcs)]; // #continuum states in a bin
+    for(int nlvl=0; nlvl<nCS; nlvl++) { // find Gg of each state in the EJpi bin
+      dGg = GetWidth(nExBin,nSpcs,nParcs,nlvl,nReal,
+                              adConWid,adDisWid,arConState)*1e9;
+      vGg.push_back(dGg);
+      if(nlvl==MaxBins){
+        break;
+      }
+      //cout << "Total width of a c.s. level " << nlvl << " is "<< dGg << " meV" << endl;
+    }
+  }
+
+  vector<double> vGgMeanAndStdev = GetMeanAndStdev(vGg);
+  double dGgMean  = vGgMeanAndStdev[0];
+  double dGgStdev = vGgMeanAndStdev[1];
+
+  // cout<< "Number of states "<< nCSsum << " from " << nBins << " continuum bins; S_n +- Ex: " << nBins*g_dConESpac << endl;
+  cout << "Average total width of the c.s. is " << dGgMean<< " meV" << " +- " << dGgStdev << endl;
+
+  return dGgMean;
+}
+
 
 // Get average neutron resonance spacing D0 for s-wave neutorn capture
 // note: For now this will be for the latest realization
@@ -1641,15 +1700,15 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
 
   cout<<" s-wave neutron-capture resonance spacing, D0, from model, Ex exact: "<< D0_th_exact <<" eV"<<endl;
   cout<<" s-wave neutron-capture resonance spacing, D0, from model: "<< D0_th <<" eV"<<endl;
-  cout<<" s-wave neutron-capture resonance spacing, D0, form realiation: "<< D0_real <<" eV"<<endl; 
+  cout<<" s-wave neutron-capture resonance spacing, D0, form realiation: "<< D0_real <<" eV"<<endl;
   cout<< "#States in bin(s): " << nLevelsSum << " from " << nBins << " continuum bins; Ex +- dEx: " << nBins*g_dConESpac << endl;;
-  
+
   return D0_real;
 }
 
 
 
-TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean]; 
+TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean];
 TH1D *g_ahDisPop   [g_nReal][g_nExIMean];
 TH1D *g_ahJPop     [g_nReal][g_nExIMean];
 TH1D *g_ahTSC      [g_nReal][g_nExIMean][g_nDisLvlMax];
@@ -1679,7 +1738,7 @@ vector<Double_t> v_dTimeToLvls_save; // decay time until this level
 void RAINIER(int g_nRunNum = 1) {
   cout << "Starting RAINIER" << endl;
   TTimeStamp tBegin;
-  try {g_sRAINIERPath = string(std::getenv("RAINIER_PATH"));} 
+  try {g_sRAINIERPath = string(std::getenv("RAINIER_PATH"));}
       catch (std::logic_error&) {
       	cout<< "RAINIER_PATH not set as environment variable"<< endl;
       	g_sRAINIERPath=".";};
@@ -1711,7 +1770,7 @@ void RAINIER(int g_nRunNum = 1) {
 
   ///////// Realization Loop /////////
   for(int real=0; real<g_nReal; real++) {
-    BuildConstructed(real); 
+    BuildConstructed(real);
     #ifdef bPrintLvl
     PrintConLvl();
     #endif
@@ -1743,8 +1802,8 @@ void RAINIER(int g_nRunNum = 1) {
         // harder to pick out multistep decay at short times and low ExI
       int nFeedTimeBin = 300;
       g_ah2FeedTime[real][exim] = new TH2D(
-        Form("h2ExI%dFeedTime_%d",exim,real), 
-        Form("Feeding Levels: %2.1f MeV, Real%d",dExIMean,real), 
+        Form("h2ExI%dFeedTime_%d",exim,real),
+        Form("Feeding Levels: %2.1f MeV, Real%d",dExIMean,real),
         g_nDisLvlMax,0,g_nDisLvlMax, nFeedTimeBin,0.0,dFeedTimeMax);
 
       int nBinEx = 300, nBinEg = 300; // mama, rhosigchi, etc. purposes
@@ -1770,23 +1829,23 @@ void RAINIER(int g_nRunNum = 1) {
         int nDisPar    = g_anDisPar[dis];
         if(nDisPar == 0) // negative parity
           g_ahTSC[real][exim][dis] = new TH1D(
-            Form("hExI%dto%dTSC_%d",exim,dis,real), 
+            Form("hExI%dto%dTSC_%d",exim,dis,real),
             Form("TSC to lvl %2.1f- %2.3f MeV, Real%d",
             dDisSp,dDisEne,real),
             g_nEgBin,0.0,dEgMax);
         else // positive parity
           g_ahTSC[real][exim][dis] = new TH1D(
-            Form("hExI%dto%dTSC_%d",exim,dis,real), 
+            Form("hExI%dto%dTSC_%d",exim,dis,real),
             Form("TSC to lvl %2.1f+ %2.3f MeV, Real%d",
             dDisSp,dDisEne,real),
             g_nEgBin,0.0,dEgMax);
       } // TSC to discrete lvl
 
       for(int prim2=0; prim2<g_nDRTSC; prim2++) {
-        // dont want to make into th2d and do projections later 
+        // dont want to make into th2d and do projections later
         // like I did with feedAnalysis, was too time coding time costly
         g_ahDRTSC[real][exim][prim2] = new TH1D(
-          Form("hExI%dDRTSC_%d_%d",exim,prim2,real), 
+          Form("hExI%dDRTSC_%d_%d",exim,prim2,real),
           Form("Primary 2^{+}: %2.1f MeV, Real%d",dExIMean,real),
           g_nEgBin,0.0,dEgMax);
       } // prim2
@@ -1813,16 +1872,16 @@ void RAINIER(int g_nRunNum = 1) {
 
       #ifdef bExSingle
       // save initial widths and rands so dont need to recompute
-      double *adDisWid1     = new double  [g_nDisLvlMax]; 
-      double *adConWid1     = new double  [g_nConEBin * g_nConSpbMax * 2](); 
+      double *adDisWid1     = new double  [g_nDisLvlMax];
+      double *adConWid1     = new double  [g_nConEBin * g_nConSpbMax * 2]();
       TRandom2 *arConState1 = new TRandom2[g_nConEBin * g_nConSpbMax * 2];
 
       TRandom2 ranEv1(1); // unused
       int nExI1,nSpbI1,nParI1,nDisEx1,nLvlInBinI1;
-      GetExI(nExI1, nSpbI1, nParI1, nDisEx1, nLvlInBinI1, ranEv1, 
+      GetExI(nExI1, nSpbI1, nParI1, nDisEx1, nLvlInBinI1, ranEv1,
         1.0, 1.0); // unused
       int nConEx1 = nExI1, nSpb1 = nSpbI1, nPar1 = nParI1,
-        nLvlInBin1 = nLvlInBinI1;            
+        nLvlInBin1 = nLvlInBinI1;
       cout << "Getting 1st step widths" << endl;
       double dTotWid1 = GetWidth(
         nConEx1, nSpb1, nPar1, nLvlInBin1, real,
@@ -1847,7 +1906,7 @@ void RAINIER(int g_nRunNum = 1) {
         #ifdef bParallel
         int nCount = 0;
         int nThreads = omp_get_num_threads();
-        #pragma omp for 
+        #pragma omp for
         #endif
         ////////////////////////////////////////////////////////////////////////
         /////// EVENT LOOP /////////////////////////////////////////////////////
@@ -1856,10 +1915,10 @@ void RAINIER(int g_nRunNum = 1) {
           #ifdef bParallel
           nCount++;
           if( !( (nCount * nThreads) % g_nEvUpdate) )
-            fprintf(stderr,"    approx: %d / %d \r", 
+            fprintf(stderr,"    approx: %d / %d \r",
               nCount * nThreads, g_nEvent);
           #else
-          if( !(ev % g_nEvUpdate) ) 
+          if( !(ev % g_nEvUpdate) )
             cout << "    " << ev << " / " << g_nEvent << "\r" << flush;
           #endif
           TRandom2 ranEv(1 + real + ev * g_nReal);
@@ -1899,12 +1958,12 @@ void RAINIER(int g_nRunNum = 1) {
             if(nConEx < 0) { // in discrete
               dExPre  = g_adDisEne[nDisEx];
             } else { // in constructed scheme
-              dExPre  = GetInBinE(real,nConEx,nSpb,nPar,nLvlInBin); 
+              dExPre  = GetInBinE(real,nConEx,nSpb,nPar,nLvlInBin);
             } // pre decay
 
             // Fill populations
-            if(nPar == 1) g_ah2PopLvl[real][exim]->Fill(nSpb + 0.5, dExPre); 
-            else g_ah2PopLvl[real][exim]->Fill(-nSpb - 0.5, dExPre); 
+            if(nPar == 1) g_ah2PopLvl[real][exim]->Fill(nSpb + 0.5, dExPre);
+            else g_ah2PopLvl[real][exim]->Fill(-nSpb - 0.5, dExPre);
               // +-0.5 so can plot 0+ and 0-
 
             ///// during decay /////
@@ -1941,24 +2000,24 @@ void RAINIER(int g_nRunNum = 1) {
                   g_grTotWidAvg[exim]->SetPoint(real, real, dNewAvg);
                 } else { // 1st real
                   g_grTotWidAvg[exim]->SetPoint(real, real, dTotWid);
-                } 
+                }
               } // bench
               #ifdef bExSingle
               if(nConEx == g_nConEBin - 1) { // use saved init widths and rands
-                dTimeToLvl += GetDecayTime(dTotWid1, ranEv); 
+                dTimeToLvl += GetDecayTime(dTotWid1, ranEv);
                 bIsAlive = TakeStep(
                   nConEx, nSpb, nPar, nDisEx, nLvlInBin,
                   nTransMade, dMixDelta2, dTotWid1, real,
                   adConWid1, adDisWid1, arConState1, ranEv);
               } else { // not at initial state
-                dTimeToLvl += GetDecayTime(dTotWid, ranEv); 
+                dTimeToLvl += GetDecayTime(dTotWid, ranEv);
                 bIsAlive = TakeStep(
                   nConEx, nSpb, nPar, nDisEx, nLvlInBin,
                   nTransMade, dMixDelta2, dTotWid, real,
                   adConWid, adDisWid, arConState, ranEv);
               } // Ex Single
               #else
-              dTimeToLvl += GetDecayTime(dTotWid, ranEv); 
+              dTimeToLvl += GetDecayTime(dTotWid, ranEv);
               bIsAlive = TakeStep(
                 nConEx, nSpb, nPar, nDisEx, nLvlInBin,
                 nTransMade, dMixDelta2, dTotWid, real,
@@ -1976,7 +2035,7 @@ void RAINIER(int g_nRunNum = 1) {
                 g_ah2FeedTime[real][exim]->Fill(nDisEx, dTimeToLvl);
                 g_ahDisPop[real][exim]->Fill(nDisEx);
               } else { // in constructed scheme
-                dExPost = GetInBinE(real,nConEx,nSpb,nPar,nLvlInBin); 
+                dExPost = GetInBinE(real,nConEx,nSpb,nPar,nLvlInBin);
               }
 
               double dEg = dExPre - dExPost;
@@ -2008,10 +2067,10 @@ void RAINIER(int g_nRunNum = 1) {
                     if(g_anDRTSC[prim2] == nDisEx) { // primary is known 2+
                       g_ahDRTSC[real][exim][prim2]->Fill(dEg); // neglect ICC
                     } // primary is known 2+
-                  } // check if primary 
+                  } // check if primary
                 } // 1st step to discrete
               } else { // was electron
-                // if you want an IC spectrum, need to separate out individual 
+                // if you want an IC spectrum, need to separate out individual
                 // XL components from BrIcc. Also need to read electronic shell
                 // energies then subtract them from the transition E:
                 // g_ahICSpec[real][exim]->Fill(dEg - dElecBindEne);
@@ -2023,7 +2082,7 @@ void RAINIER(int g_nRunNum = 1) {
               if(nStep == 2 && !bHadEle) {
                 for(int dis=0; dis<g_nDisLvlMax; dis++) {
                   if(nDisEx == dis) {
-                    g_ahTSC[real][exim][dis]->Fill(dEg1); 
+                    g_ahTSC[real][exim][dis]->Fill(dEg1);
                     g_ahTSC[real][exim][dis]->Fill(dEg2);
                   } // discrete match
                 } // end on discrete
@@ -2034,7 +2093,7 @@ void RAINIER(int g_nRunNum = 1) {
           } // no longer excited
 
           // saving to tree; slightly hacky coding in order to
-          // ensure that it is thread save, without creating 
+          // ensure that it is thread save, without creating
           // one tree per thread
           #ifdef bSaveTree
             #ifdef bParallel
@@ -2082,14 +2141,14 @@ void RAINIER(int g_nRunNum = 1) {
         #endif
         //cout << "    " << nEle << " internal conversions" << endl;
       } // parallel
-      cout << endl << "    " << g_nEvent << " / " << g_nEvent << " processed" 
+      cout << endl << "    " << g_nEvent << " / " << g_nEvent << " processed"
         << endl << endl;
 
       ///// plotting preferences /////
       TH2D *g_ah2Temp[] = {
-        g_ah2PopLvl  [real][exim], 
-        g_ah2FeedTime[real][exim], 
-        g_ah2ExEg    [real][exim],  
+        g_ah2PopLvl  [real][exim],
+        g_ah2FeedTime[real][exim],
+        g_ah2ExEg    [real][exim],
         g_ah21Gen    [real][exim],
         g_ah2PopI    [real][exim]
         };
@@ -2102,14 +2161,14 @@ void RAINIER(int g_nRunNum = 1) {
 
         g_ah2Temp[h]->GetYaxis()->SetTitleSize(0.055);
         g_ah2Temp[h]->GetYaxis()->SetTitleFont(132);
-        g_ah2Temp[h]->GetYaxis()->SetTitleOffset(0.65);    
+        g_ah2Temp[h]->GetYaxis()->SetTitleOffset(0.65);
         g_ah2Temp[h]->GetYaxis()->CenterTitle();
 
         g_ah2Temp[h]->GetZaxis()->SetTitleSize(0.045);
         g_ah2Temp[h]->GetZaxis()->SetTitleFont(132);
-        g_ah2Temp[h]->GetZaxis()->SetTitleOffset(-0.4);    
+        g_ah2Temp[h]->GetZaxis()->SetTitleOffset(-0.4);
         g_ah2Temp[h]->GetZaxis()->CenterTitle();
-        g_ah2Temp[h]->GetZaxis()->SetTitle("Counts");    
+        g_ah2Temp[h]->GetZaxis()->SetTitle("Counts");
       } // hists
       g_ah2PopLvl  [real][exim]->GetXaxis()->SetTitle("J#Pi");
       g_ah2PopLvl  [real][exim]->GetXaxis()->SetNdivisions(20,0,0,kFALSE);
@@ -2123,9 +2182,9 @@ void RAINIER(int g_nRunNum = 1) {
 
       // TH1D:
       TH1D *g_ah1Temp[] = {
-        g_ahGSpec [real][exim], 
+        g_ahGSpec [real][exim],
         //g_ahTSC   [real][exim],
-        g_ahDisPop[real][exim], 
+        g_ahDisPop[real][exim],
         g_ahJPop  [real][exim],
         g_ahDRTSC [real][exim][0] // 1st determines axes in plot
       };
@@ -2135,13 +2194,13 @@ void RAINIER(int g_nRunNum = 1) {
         g_ah1Temp[h]->GetXaxis()->SetTitleFont(132);
         g_ah1Temp[h]->GetXaxis()->SetTitleOffset(0.8);
         g_ah1Temp[h]->GetXaxis()->CenterTitle();
-        g_ah1Temp[h]->GetXaxis()->SetTitle("E_{#gamma} (MeV)");    
+        g_ah1Temp[h]->GetXaxis()->SetTitle("E_{#gamma} (MeV)");
 
         g_ah1Temp[h]->GetYaxis()->SetTitleSize(0.055);
         g_ah1Temp[h]->GetYaxis()->SetTitleFont(132);
-        g_ah1Temp[h]->GetYaxis()->SetTitleOffset(0.85);    
+        g_ah1Temp[h]->GetYaxis()->SetTitleOffset(0.85);
         g_ah1Temp[h]->GetYaxis()->CenterTitle();
-        g_ah1Temp[h]->GetYaxis()->SetTitle("Counts");    
+        g_ah1Temp[h]->GetYaxis()->SetTitle("Counts");
       } // hists
 
     } // Excitation mean
@@ -2155,7 +2214,7 @@ void RAINIER(int g_nRunNum = 1) {
   #define SAVE_PAR(stream,variable) (stream) <<#variable" "<<(variable) << endl
   #define SAVE_ARR(stream,variable,size) (stream) <<#variable<<" "; for(int i=0; i<size; i++) { (stream) << (variable[i]) << " "; }; (stream) << endl;
   TString sParFile = TString::Format("Param%04d.dat", g_nRunNum);
-  ofstream ofParam; 
+  ofstream ofParam;
   ofParam.open(sParFile.Data());
   SAVE_PAR(ofParam,g_dECrit);
   SAVE_PAR(ofParam,g_dExISpread);
@@ -2177,18 +2236,18 @@ void RAINIER(int g_nRunNum = 1) {
   SAVE_ARR(ofParam,g_adExIMean,g_nExIMean);
 
   TString sInputFile = TString::Format("Input%04d.dat", g_nRunNum);
-  ofstream ofInput; 
-  ifstream ifInput; 
-  ifInput.open("RAINIER.C"); 
+  ofstream ofInput;
+  ifstream ifInput;
+  ifInput.open("RAINIER.C");
   ofInput.open(sInputFile.Data());
   string sLine;
   while( getline(ifInput,sLine) ) {
-    ofInput << sLine << endl;    
+    ofInput << sLine << endl;
   }
 
   TTimeStamp tEnd;
   double dElapsedSec = double(tEnd.GetSec() - tBegin.GetSec());
-  cout << "Time elapsed during RAINIER execution: " << dElapsedSec << " sec" 
+  cout << "Time elapsed during RAINIER execution: " << dElapsedSec << " sec"
     << endl;
   gROOT->ProcessLine(".L $RAINIER_PATH/Analyze.C++"); // load the separate analysis file
   gROOT->ProcessLine("RetrievePars()"); // linking files is always wonky in ROOT
