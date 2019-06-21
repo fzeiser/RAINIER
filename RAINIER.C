@@ -87,11 +87,23 @@ double g_adDisGamICC[g_nDisLvlMax][g_nDisLvlGamMax]; // daughter Alpha ICC
 // could do these dynamically, but takes time to code
 
 double g_dECrit; // trust lvl scheme up to this E, determined by g_nDisLvlMax
+double g_dLvlT12_arb_max = 1e9; // if halflife not know, set to this value
+
 void ReadDisInputFile() {
   ifstream lvlFile;
-  TString szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
+  // to to open local file first
+  TString szFile = "mylevels_z" + TString::Format("%03d",g_nZ) + ".dat";
   lvlFile.open(szFile.Data());
-  if (lvlFile.fail()) {cerr << "Level File could not be opened" << endl; exit(0);}
+  if (lvlFile.fail()) {
+    cout << "FAILED to read " << szFile << endl;
+    lvlFile.close();
+    szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
+    lvlFile.open(szFile.Data());
+    if (lvlFile.fail()) {cerr << "Level File could not be opened" << endl; exit(0);}
+  }
+  cout << "Opened level file at: " << szFile << endl;
+
+
 
   string sNucSearchLine;
   string sChem;
@@ -119,11 +131,12 @@ void ReadDisInputFile() {
 
     if(nLvlPar == -1) nLvlPar = 0; // 1=+, 0=- diff convention dicebox and talys
     if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch" << endl;
-    if(int(dLvlT12) == dLvlT12) {
-
-      // sometimes no halflife meas
-      nLvlGam = dLvlT12; // missing half-life
-      dLvlT12 = 999;
+    if(int(dLvlT12) == dLvlT12 && dLvlT12<100) {
+      // sometimes no halflife meas; or a halflive is very(!) long
+      cerr << "err: Halflives not reported; set to arb value; check z file" << endl;
+      if (lvl==0) { nLvlGam = 0; } // unstable gs
+      else {nLvlGam = dLvlT12;} // nLvlGam read as half-life
+      dLvlT12 = g_dLvlT12_arb_max;
     }
 
     g_adDisEne[lvl] = dLvlEner;
@@ -165,12 +178,15 @@ void ReadDisInputFile() {
 
 void PrintDisLvl() {
   cout << "****** Discrete ******" << endl;
+  cout << "i \t E \t J \t Pi(1=+) \t T1/2" << endl;
+  cout << "\t i_final \t Br" << endl;
+  cout << " ---------------------- " << endl;
   for(int lvl=0; lvl<g_nDisLvlMax; lvl++) {
     // levels
     cout << lvl << ":\t " << g_adDisEne[lvl] << "   " << g_adDisSp[lvl]
       << (g_anDisPar[lvl]==1?"+":"-")  // careful dicebox flips parity
       << " ";
-      if(g_adDisT12[lvl] < 1e9) cout << g_adDisT12[lvl] << " fs" << endl;
+      if(g_adDisT12[lvl] < g_dLvlT12_arb_max) cout << g_adDisT12[lvl] << " fs" << endl;
       else cout << "N/A" << endl; // lifetime not measured
     // gammas
     for(int gam=0; gam<g_anDisGam[lvl]; gam++) {
