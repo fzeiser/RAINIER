@@ -491,8 +491,8 @@ void BuildConstructed(int nReal) {
     g_adConExCen[ex] = g_dECrit + (ex + 0.5) * g_dConESpac;
   } // ex
 
-  for(int par=0; par<2; par++) {
-    for(int spb=0; spb<g_nConSpbMax; spb++) {
+  for(int spb=0; spb<g_nConSpbMax; spb++) {
+    for(int par=0; par<2; par++) {
       double dSp; // integer or half integer, for density
       if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
 
@@ -515,7 +515,8 @@ void BuildConstructed(int nReal) {
       } // ex
 
       ///// Level assignment /////
-      double dWigSampleSum = 0.0;
+      double dWigSampleSum = 2.0 / sqrt(g_dPi)
+            * sqrt( -log( ranLvlGen.Uniform(1.0) ) );
       // expectation value of avg dist between neighboring levels is 1
       for(int ex=0; ex<g_nConEBin; ex++) {
         while( dWigSampleSum < adExpCumulCon[ex] ) {
@@ -527,8 +528,8 @@ void BuildConstructed(int nReal) {
         g_anConCumul[EJP(ex,spb,par)] = g_nConLvlTot;
       } // ex
 
-    } // spb
-  } // par
+    } // par
+  } // spb
   #endif
 } // BuildConstructed
 
