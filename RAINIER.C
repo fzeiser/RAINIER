@@ -130,10 +130,10 @@ void ReadDisInputFile() {
     nLvl--; // to match convention of ground state is lvl 0
 
     if(nLvlPar == -1) nLvlPar = 0; // 1=+, 0=- diff convention dicebox and talys
-    if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch" << endl;
+    if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch at nLvl:" << nLvl << " lvl: " << lvl << endl;
     if(int(dLvlT12) == dLvlT12 && dLvlT12<100) {
       // sometimes no halflife meas; or a halflive is very(!) long
-      cerr << "err: Halflives not reported; set to arb value; check z file" << endl;
+      cerr << "err: For level " << lvl << " Halflives not reported; set to arb value; check z file" << endl;
       if (lvl==0) { nLvlGam = 0; } // unstable gs
       else {nLvlGam = dLvlT12;} // nLvlGam read as half-life
       dLvlT12 = g_dLvlT12_arb_max;
