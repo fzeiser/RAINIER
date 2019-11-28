@@ -1570,16 +1570,22 @@ void InitFn() {
 TString smyFile = "NLDcont.dat";
 ofstream ofNLD;
 ofNLD.open(smyFile.Data());
-ofNLD << "#Energy \t NLD" << endl;
+ofNLD << "#Energy \t levels_created [this bin] \t levels_model [MeV^-1] \t levels_model_from_tot [MeV^-1]" << endl;
 for(int ex=0; ex<g_nConEBin; ex++) {
   double energy = g_adConExCen[ex];
-  double rho = 0;
+  // int nExI = round( (energy - g_dECrit) / g_dConESpac);
+  // cout << ex << " " << nExI << endl;;
+  double rho_model = 0;
+  double rho_created = 0;
   // Get density adJInt for each spin
-  for(int spb=0; spb<=g_nConSpbMax; spb++) {
+  for(int spb=0; spb<g_nConSpbMax; spb++) {
       if(g_bIsEvenA) dSp = spb; else dSp = spb + 0.5;
-      rho += GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
+      rho_model += GetDensity(g_adConExCen[ex],dSp,0)+GetDensity(g_adConExCen[ex],dSp,1); // add both parities
+
+      rho_created += g_anConLvl[EJP(ex, spb, 0)] + g_anConLvl[EJP(ex, spb, 1)];
   }
-  ofNLD << energy << "\t" << rho << endl;
+  ofNLD << energy << "\t" << rho_created << "\t" << rho_model
+        << "\t" <<  GetDensityTot(energy) <<  endl;
 }
 
 
@@ -1726,6 +1732,7 @@ double GetD0(double dEx, double dSp, int nPar, int nBins=1) {
 
 
 TH2D *g_ah2PopLvl  [g_nReal][g_nExIMean];
+TH2D *g_ah2PopLvlI  [g_nReal][g_nExIMean];
 TH1D *g_ahDisPop   [g_nReal][g_nExIMean];
 TH1D *g_ahJPop     [g_nReal][g_nExIMean];
 TH1D *g_ahTSC      [g_nReal][g_nExIMean][g_nDisLvlMax];
@@ -1812,6 +1819,12 @@ void RAINIER(int g_nRunNum = 1) {
       g_ah2PopLvl[real][exim] = new TH2D(
         Form("h2ExI%dPopLvl_%d",exim,real),
         Form("Population of Levels: %2.1f MeV, Real%d",dExIMean,real),
+        2*g_dPlotSpMax, -g_dPlotSpMax, g_dPlotSpMax,
+        g_dExIMax / g_dConESpac, 0, g_dExIMax);
+
+      g_ah2PopLvlI[real][exim] = new TH2D(
+        Form("h2ExI%dPopLvlI_%d",exim,real),
+        Form("Initial Population of Levels: %2.1f MeV, Real%d",dExIMean,real),
         2*g_dPlotSpMax, -g_dPlotSpMax, g_dPlotSpMax,
         g_dExIMax / g_dConESpac, 0, g_dExIMax);
 
@@ -1955,6 +1968,8 @@ void RAINIER(int g_nRunNum = 1) {
             dExI = GetInBinE(real,nExI,nSpbI,nParI,nLvlInBinI);
           }
           g_ah2PopI[real][exim]->Fill(nSpbI,dExI);
+          if(nPar == 1) g_ah2PopLvlI[real][exim]->Fill(nSpb + 0.5, dExI);
+          else g_ah2PopLvlI[real][exim]->Fill(-nSpb - 0.5, dExI);
 
           double dTimeToLvl = 0.0;
           int nStep = 0;
