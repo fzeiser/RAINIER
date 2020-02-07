@@ -284,6 +284,14 @@ double GetEff(double dEx) {
   return dEff;
 } // GetEff
 
+#ifdef bJCut_UsrDef_Shift
+double GetEff_JCut_Usr(double dEx) {
+    double dEff = dEx - g_dE1Usr;
+    if(dEff < 0.0) dEff = 0.00000001;
+  return dEff;
+} // GetEff_JCut_Usr
+#endif
+
 double GetLDa(double dEx) { // TALYS 1.8 asymptotic dependence
   double dEff = GetEff(dEx);
   #ifdef bLDaConst
@@ -299,7 +307,11 @@ double GetLDa(double dEx) { // TALYS 1.8 asymptotic dependence
 
 double GetSpinCut2(double dEx) {
   #ifndef bLD_Table
-  double dEff = GetEff(dEx);
+  #ifdef bJCut_UsrDef_Shift
+    double dEff = GetEff_JCut_Usr(dEx);
+    #else
+    double dEff = GetEff(dEx);
+  #endif
   double dLDa = GetLDa(dEx);
   #endif
 

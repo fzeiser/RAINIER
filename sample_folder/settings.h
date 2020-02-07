@@ -9,7 +9,7 @@
 const int g_nReal = 1; // number of realizations of nuclear level scheme
 const int g_nEvent = 1e3; // number of events per realization (and ExI in bExSpread)
 const int g_nEvUpdate = 1e2; // print progress to screen at this interval
-const int g_nEvSave = g_nEvent/10; // save checkpoint every now and then 
+const int g_nEvSave = g_nEvent/10; // save checkpoint every now and then
 
 // #define bSaveTree // to save cascades to a ROOT tree in the RunXXXX.root file
 
@@ -53,12 +53,12 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   const double g_dE0   = -1.31817; // MeV
   //const double g_dE0   = -1.004 + 0.5 * g_dDeuPair; // MeV; von egidy09 fit
   #endif
-  
+
   #ifdef bLD_UsrDef
   const double g_dTemp =  0.48473; // MeV
   const double g_dE0   = -1.31817; // MeV
   #endif
-  
+
   #ifdef bLD_BSFG
   const double g_dE1 = 0.968; // MeV, excitation energy shift
   //const double g_dDeuPair = 2.698; // MeV; can get from ROBIN: Pa_prime
@@ -66,29 +66,30 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   #endif
   //deuteron pairing energy from mass table, related to backshift in BSFG or CTM
   // used for effective energy in LD, spincut, GSF models
-  
+
   /////Level Density Parameter "a" = pi^2 / (6 * (n + p orbital spacing) ) /////
   #define bLDaConst // constant value of "a"
   //#define bLDaEx // a(Ex) = aAsym * (1 + dW * (1 - exp(-Gam * Eff) / dEff) )
-  
+
   #ifdef bLDaConst
-  const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a" 
+  const double g_dLDa = 14.58; // MeV^-1 aka "LD parameter a"
   #endif
   #ifdef bLDaEx
   const double g_dLDaAsym   = 14.58; // MeV^-1; Asymptotic value, a(Ex->Inf)
   const double g_dDampGam   = 0.0; // Damping Parameter
   const double g_dShellDelW = 0.0; // MeV; M_exp - M_LDM ~ shell correction
   #endif
-  
+
   ///// Spin Cutoff (Underlying LD)/////
   // choose one:
   //#define bJCut_VonEgidy05 // low-energy model
+  // #define bJCut_UsrDef_Shift // together with EB05 to get "Oslo"-like spincut
   //#define bJCut_SingPart // single particle model
   #define bJCut_RigidSph // rigid sphere model
-  //#define bJCut_VonEgidy09 // empirical fit 
+  //#define bJCut_VonEgidy09 // empirical fit
   //#define bJCut_TALYS // TALYS rigid sphere and discrete interpolation
   //#define bJCut_UsrDef // user defined
-  
+
   #ifdef bJCut_VonEgidy09
   const double g_dDeuPair = 0.62834; // MeV;
   #endif
@@ -96,6 +97,10 @@ const double g_dDelta = 3.20713; // effective energy due to pair breaking
   const double g_dSn = 11.19711; //MeV  neutron separation energy
   const double g_dEd = 3.3532385; //MeV  (E_U + E_L)/2, upper and lower discrete
   const double g_dSpinCutd = 2.39890; //hbar  discrete Jcut; TALYS 1.8 Eq. 4.255
+  #endif
+
+  #ifdef bJCut_UsrDef_Shift
+  double g_dE1Usr = 0.12; // shift for Ex in spin-cut -- in Oslo different from g_dE0/g_dE1!
   #endif
 
 #endif // bLD_Table
@@ -132,7 +137,7 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   ///// fE1 /////
   // choose one:
   #define bE1_GenLor // General Lorentzian
-  //#define bE1_EGLO //Enhanced Generalized Lorentzian for A>148; 
+  //#define bE1_EGLO //Enhanced Generalized Lorentzian for A>148;
   //  -> allow "#define bE1_GenLor" when using #define bE1_EGLO
   //#define bE1_KMF // Kadmenskij Markushev Furman model
   //#define bE1_KopChr // Kopecky Chrien model
@@ -142,7 +147,7 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
   const double g_adEneE1[] = { 15.05, 0.01}; // MeV centroid energy, non-zero
   const double g_adGamE1[] = {  5.30, 0.00}; // MeV GDR width
   //                                  ^^^^ for a 2nd resonance
-  
+
   ///// fM1 /////
   #define bM1_StdLor // standard Lorentzian, parameterized by Prestwich
   //#define bM1_UsrDef // user defined
@@ -176,7 +181,7 @@ const double g_dNu = 0.5; // See Koehler PRL105,072502(2010): measured nu~0.5
 
 #endif // bGSF_Table
 
-const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2) 
+const double g_dKX1 = 8.673592583E-08; // mb^-1 MeV^-2;  = 1/(3*(pi*hbar*c)^2)
 
 ////////////////////// Internal Conversion Coefficient, ICC, Settings //////////
 //#define bUseICC // ICC = 0.0 otherwise
@@ -211,7 +216,7 @@ const double g_adBRI[]   = {0, 0.1, 0.2, 0.7}; // Branching Ratio: has to sum up
 const double g_dExIMax = 8.0; // MeV; constructed lvl scheme built up to this
 // dont exceed with init excitations - gaus might sample higher than expected
 const double g_adExIMean[] = {3.0, 4.0, 5.0, 6.0, 7.0}; // MeV
-const double g_dExISpread = 0.2 / 2.355; // MeV; std dev sigma = FWHM / 2.355 
+const double g_dExISpread = 0.2 / 2.355; // MeV; std dev sigma = FWHM / 2.355
 const double g_dExRes = 0.2; // excitation resolution on g_ah2ExEg for analysis
 #define bJIUnderlying // initial population = intrinsic J dist of the nucleus
 //#define bJIPoisson
@@ -285,7 +290,7 @@ const int g_nDRTSC   = sizeof(g_anDRTSC)   / sizeof(int);
 #endif // cling
 
 #ifdef bParallel
-#ifndef CINT 
+#ifndef CINT
 #include "omp.h" // for parallel on shared memory machine (not cluster yet)
 #endif // cint
 #endif // parallel
