@@ -1750,7 +1750,7 @@ void RAINIER(int g_nRunNum = 1) {
 
     #ifdef bSaveTree
     if(g_nReal>1){
-      tree->Branch("realiation",&real_save,"real_save/I");
+      tree->Branch("realization",&real_save,"real_save/I");
     }
     #endif // bSaveTree
 
