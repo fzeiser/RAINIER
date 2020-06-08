@@ -1695,6 +1695,7 @@ TGraph *g_grTotWidAvg       [g_nExIMean];
 #ifdef bSaveTree
 // to save data to trees
 vector<Double_t> v_dEgs_save; // emitted gamma rays
+vector<Double_t> v_dExfs_save; // final state energy
 double dExI_save; // initial excitation energy
 int nJI_save; // initial spin (for uneven A: J=J-0.5)
 int nPar_save; // initial parity (0 or 1: see elsewhere)
@@ -1732,6 +1733,7 @@ void RAINIER(int g_nRunNum = 1) {
   #ifdef bSaveTree
   TTree *tree = new TTree("tree","RAINIER cascades tree");
   tree->Branch("Egs",&v_dEgs_save);
+  tree->Branch("Exfs",&v_dExfs_save);
   tree->Branch("ExI",&dExI_save, "dExI_save/D");
   tree->Branch("JI_int",&nJI_save, "nJI_save/I");
   tree->Branch("nPar",&nPar_save, "nPar_save/I");
@@ -1916,6 +1918,7 @@ void RAINIER(int g_nRunNum = 1) {
           bool bHadEle = false;
           #ifdef bSaveTree
           vector<Double_t> v_dEgs;
+          vector<Double_t> v_dExfs;
           vector<Double_t> v_dTimeToLvls;
           #endif // bSaveTree
           /////// Decay till ground state ////////
@@ -2011,6 +2014,7 @@ void RAINIER(int g_nRunNum = 1) {
               double dEg = dExPre - dExPost;
               #ifdef bSaveTree
               v_dEgs.push_back(dEg);
+              v_dExfs.push_back(dExPost);
               v_dTimeToLvls.push_back(dTimeToLvl);
               #endif // bSaveTree
               ///// Internal Conversion /////
@@ -2071,6 +2075,7 @@ void RAINIER(int g_nRunNum = 1) {
             {
             #endif //bParallel
             v_dEgs_save = v_dEgs;
+            v_dExfs_save = v_dExfs;
             v_dTimeToLvls_save = v_dTimeToLvls;
             dExI_save = dExI;
             nJI_save = nSpbI;
