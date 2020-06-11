@@ -1155,7 +1155,6 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
     ///// decay to discrete? /////
     for(int lvl=0; lvl<g_nDisLvlMax; lvl++) {
       dWidCumulative += adDisWid[lvl]; // already has ICC
-      if(adDisWid[lvl] > 1e-4) cerr << "err: discrete width uninit" << endl;
       if(dWidCumulative >= dRanWid) {//once adds to more than dRanWid, it decays
         if(!bFoundLvl) { // for safety check
           bFoundLvl = true;
@@ -1178,7 +1177,6 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
         if(nTransType != 0) {
           for(int ex=0; ex<nConEx; ex++) {
             double dConWid = adConWid[EJP(ex,spb,par)];
-            if(dConWid > 1e-4) cerr << "err: con width uninit" << endl;
             dWidCumulative += dConWid;
 
             if(dWidCumulative >= dRanWid) {// once adds up to dRanWid, it decays
