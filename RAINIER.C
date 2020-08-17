@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <vector>
+#include <tuple>
 #include <numeric>
 #include "math.h"
 #include "TTimeStamp.h"
@@ -1283,6 +1284,56 @@ int GetContExBin(double dExcs) {
   return -1; // if no fitting bin was found
 }
 
+
+/////////////// Check level exists//////////////////////////////////////////////
+std::tuple<int, int> GetLevelIfExists(double dExI, int &nExI, int &nSpbI,
+                                      int &nParI, int &nDisEx, int &nLvlInBinI,
+                                      TRandom2 &ranEv){
+      // check wether level exists
+      if(dExI < g_dECrit + 0.001) { // is discrete
+        // need to be very careful of doublets and precision
+        nExI = -1;
+        bool bDisBinFound = false;
+
+        for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
+          double dLvlE = g_adDisEne[lvl];
+          if(TMath::Abs(dExI - dLvlE) < 0.001) {
+            nDisEx = lvl;
+            if (nSpbI == g_adDisSp[nDisEx] && nParI == g_anDisPar[nDisEx]) {
+              bDisBinFound = true;
+              break; // dis lvl
+            }
+          } // match E
+        } // lvl
+
+        if( !bDisBinFound ) cerr << "err: no discrete match @ " << dExI
+                                 << " MeV, J/pi= " << nSpbI << "," << nParI << endl;
+        if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
+        else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
+        nParI = g_anDisPar[nDisEx];
+        nLvlInBinI = 0;
+      } // discrete
+      else { // is continuum level
+        nExI = round( (dExI - g_dECrit - 0.001) / g_dConESpac );
+        nDisEx = g_nDisLvlMax; // dummy
+        // For now: assuming selection rules dJ = dPi = 0!
+        int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
+        if(nLvlAvail>0) {
+          nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
+        }
+        else {
+          cerr << "\n" << "err: No level to populate for Ex=" << dExI
+          << "\n check spin-parity of generated continuum level vs population from bExSelect"
+          << endl;
+        }
+      } // continuum
+  // Return:
+  // - nLvlInBinI: for continuum level, for discrete is 0 anyhow
+  // - nDisEx: If it was a dicrete level (dummy for continuum)
+  return std::make_tuple(nLvlInBinI, nDisEx);
+}
+
+
 ///////////////////////// Initial Excitation ///////////////////////////////////
 void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   TRandom2 &ranEv, double dExIMean, double dExISpread) {
@@ -1295,12 +1346,14 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   nExI = g_nConEBin - 1;
   #else
   double dExI = g_dExIMax;
-  nExI = round( (dExI - g_dECrit) / g_dConESpac );
+  nExI = round( (nExI - g_dECrit) / g_dConESpac );
   #endif
   nSpbI = int(g_dSpI);
   nParI = g_dParI;
-  nDisEx = g_nDisLvlMax;
-  nLvlInBinI = 0;
+  double dExI = g_adConExCen[nExI];
+  std::tie(nLvlInBinI, nDisEx) = GetLevelIfExists(dExI, nExI, nSpbI,
+                                                  nParI, nDisEx,
+                                                  nLvlInBinI, ranEv);
   #endif
 
   ///// Beta-decay like selection of states /////
@@ -1315,43 +1368,9 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
       nParI = g_anParI[state];
 
       // check wether level exists
-      if(dExI < g_dECrit + 0.001) { // is discrete
-        // need to be very careful of doublets and precision
-        nExI = -1;
-        bool bDisBinFound = false;
-        for(int lvl=0; lvl<g_nDisLvlMax; lvl++) { // find discrete
-          double dLvlE = g_adDisEne[lvl];
-          if(TMath::Abs(dExI - dLvlE) < 0.001) {
-            nDisEx = lvl;
-            if (nSpbI == g_adDisSp[nDisEx] && nParI == g_anDisPar[nDisEx]) {
-              bDisBinFound = true;
-              break; // dis lvl
-            }
-          } // match E
-        } // lvl
-        if( !bDisBinFound ) cerr << "err: no discrete match @ " << dExI
-                                 << " MeV, J/pi= " << nSpbI << "," << nParI << endl;
-        if(g_bIsEvenA) nSpbI = int(g_adDisSp[nDisEx] + 0.001);
-        else nSpbI = int(g_adDisSp[nDisEx] - 0.499);
-        nParI = g_anDisPar[nDisEx];
-        nLvlInBinI = 0;
-        break; // state
-      } // discrete
-      else { // is continuum level
-        nExI = round( (dExI - g_dECrit) / g_dConESpac );
-        nDisEx = g_nDisLvlMax; //dummy
-        // For now: assuming selection rules dJ = dPi = 0!
-        int nLvlAvail = g_anConLvl[EJP(GetContExBin(dExI),nSpbI,nParI)];
-        if(nLvlAvail>0) {
-          nLvlInBinI = ranEv.Integer(nLvlAvail); // any lvls in bin fine
-          break; // states
-        }
-        else {
-          cerr << "\n" << "err: No level to populate for Ex=" << dExI
-          << "\n check spin-parity of generated continuum level vs population from bExSelect"
-          << endl;
-        }
-      } // continuum
+      std::tie(nLvlInBinI, nDisEx) = GetLevelIfExists(dExI, nExI, nSpbI, nParI,
+                                                      nDisEx, nLvlInBinI, ranEv);
+      break;
     } // BR > RanState
   } // state
   #endif
