@@ -1255,10 +1255,14 @@ bool TakeStep(int &nConEx, int &nSpb, int &nPar, int &nDisEx, int &nLvlInBin,
   // this is where user errors usually turn up the most
   if(nToSpb < 0 || nToPar < 0 || nToLvlInBin < 0 ) { // error check
     cerr << endl << "err: JP: from " << endl
-         << nSpb << (nPar?"+":"-") << ", Lvl: " << nDisEx << ", ConBin: "
-         << nConEx << ";" << nLvlInBin << endl << "To " << endl
-         << nToSpb << (nToPar?"+":"-") << ", Lvl: " << nToDisEx << ", ConBin: "
-         << nToConEx << ";" << nToLvlInBin << endl
+         << nSpb << (nPar?"+":"-");
+         if (nConEx < 0){cerr << ", Discrete Lvl: " << nDisEx;}
+         else {cerr << ", ConBin: " << nConEx << "; Level #"  << nLvlInBin;}
+         cerr  << endl << "To " << endl
+         << nToSpb << (nToPar?"+":"-");
+         if (nToConEx < 0){cerr << ", Discrete Lvl: " << nToDisEx;}
+         else {cerr << ", ConBin: " << nToConEx << "; Level #"  << nToLvlInBin;}
+         cerr << endl
          << "Likely branching ratios from file don't add to 1.000000" << endl
          << "Check level " << nDisEx << " in " << "zFile" << " manually."
          << endl;
