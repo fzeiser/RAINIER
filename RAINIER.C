@@ -1327,7 +1327,7 @@ std::tuple<int, int> GetLevelIfExists(double dExI, int &nExI, int &nSpbI,
         }
         else {
           cerr << "\n" << "err: No level to populate for Ex=" << dExI
-          << "\n check spin-parity of generated continuum level vs population from bExSelect"
+          << "\n check spin-parity of generated continuum level vs population from bExSingle/bExSelect"
           << endl;
         }
       } // continuum
