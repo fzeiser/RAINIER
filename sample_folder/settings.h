@@ -194,17 +194,19 @@ const double g_dICCMax = 1.0; // MeV; Uses last Ebin ICC value for higher E
 ////////////////////// Excitation Settings /////////////////////////////////////
 // choose one, fill in corresponding params:
 #define bExSingle  // single population input
-//#define bExSelect // like Beta decay
-//#define bExSpread  // ejectile detected input
-//#define bExFullRxn // no ejectile detected input
+//#define bExSelect // populate list of (Ex, J, pi) states
+//#define bExSpread  // populate from (eg. intrinsic) spin distribution for list of Ex
+//#define bExFullRxn // populate according to input file
 
-#ifdef bExSingle // similar to (n,g)
+#ifdef bExSingle // single population input
+// similar to (n,g)
 const double g_dExIMax = 7.8174; // MeV, Ei - "capture state energy"
 const double g_dSpI    = 3.0; // hbar, Ji - "capture state spin"
 const double g_dParI   = 0; // Pi - "capture state parity" 0=(-), 1=(+)
 #endif
 
-#ifdef bExSelect // similar to Beta decay
+#ifdef bExSelect // populate list of (Ex, J, pi) states
+// similar to Beta decay
 const double g_adExI[] = {0,  2.09328, 4.0016, 5.0613}; // MeV
 const double g_adSpI[]  = {0, 5, 5, 3}; // hbar
 const double g_anParI[] = {1, 0, 1, 1}; // Pi
@@ -212,7 +214,9 @@ const double g_adBRI[]   = {0, 0.1, 0.2, 0.7}; // Branching Ratio: has to sum up
 #endif
 
 #ifdef bExSpread // similar to (p,p'), (a,a'), (he3,a'), etc.
-//populates J according to intrinsic distribution, u can hardcode something else
+// populates J according to intrinsic distribution, u can hardcode something else
+// if no level in corresponding bin, tries to repick a spin (might throw of the
+// expected spin distribution)
 const double g_dExIMax = 8.0; // MeV; constructed lvl scheme built up to this
 // dont exceed with init excitations - gaus might sample higher than expected
 const double g_adExIMean[] = {3.0, 4.0, 5.0, 6.0, 7.0}; // MeV
@@ -230,7 +234,9 @@ const double g_dJIWid = 0.5;
 #endif
 #endif
 
-#ifdef bExFullRxn // from a TALYS output file if available
+#ifdef bExFullRxn // populate eg. according to TALYS output file
+// Randomly selects EJP bin from input file population distribution
+// if no level in corresponding bin, searches nearby E bins
 const double g_dExIMax = 16.0; // MeV; above max population energy
 const char popFile[] = "Nd144Pop.dat"; // made from TALYS "outpopulation y"
 // make sure to match # of discrete bins. See ReadPopFile() bins + maxlevelstar + 1 = g_nExPopI

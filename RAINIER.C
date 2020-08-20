@@ -1450,9 +1450,6 @@ void GetExI(int &nExI, int &nSpbI, int &nParI, int &nDisEx, int &nLvlInBinI,
   #endif // specific initial EJP range
 
   #ifdef bExFullRxn
-  // Randomly selects EJP bin from input file population distribution
-  // if no level in corresponding bin, searches nearby E bins
-  // - not much more you can do when matching continuum and discrete physics
   double dSp = 0.0, dEx = 0.0;
   double dPopIntegral = g_h3PopDist->Integral(); // could calc outside
   bool bLvlMatch = false;
