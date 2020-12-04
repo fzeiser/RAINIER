@@ -23,6 +23,11 @@ const bool g_bIsEvenA = !(g_nAMass % 2);
 const int g_nDisLvlGamMax = 15; // max #gammas read for a discrete lvl from file
                                 // suggestion: g_nDisLvlMax
 
+// #define buse_nondefault_levels_file
+#ifdef buse_nondefault_levels_file
+const TString slevels_file = "z060_edit.dat"; // might e.g. add missing half-life
+#endif // buse_nondefault_levels_file
+
 ///////////////////// Constructed Level Scheme Settings ////////////////////////
 ///// Bins /////
 #define bForceBinNum // else force bin spacing

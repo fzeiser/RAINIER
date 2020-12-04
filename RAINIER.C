@@ -93,15 +93,13 @@ double g_dLvlT12_arb_max = 1e9; // if halflife not know, set to this value
 void ReadDisInputFile() {
   ifstream lvlFile;
   // to to open local file first
-  TString szFile = "mylevels_z" + TString::Format("%03d",g_nZ) + ".dat";
+  #ifdef buse_nondefault_levels_file
+  TString szFile = slevels_file; // might e.g. add missing half-life
+  #else
+  TString szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
+  #endif // buse_nondefault_levels_file
   lvlFile.open(szFile.Data());
-  if (lvlFile.fail()) {
-    cout << "FAILED to read " << szFile << endl;
-    lvlFile.close();
-    szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
-    lvlFile.open(szFile.Data());
-    if (lvlFile.fail()) {cerr << "Level File could not be opened" << endl; exit(0);}
-  }
+  if (lvlFile.fail()) {cerr << "Level File: " << szFile << " could not be opened" << endl; exit(0);}
   cout << "Opened level file at: " << szFile << endl;
 
 
@@ -119,7 +117,7 @@ void ReadDisInputFile() {
     if(nA == g_nAMass && nZ == g_nZ)
       {bFoundNuc = true; cout << "Nucleus: " << endl << sNucSearchLine << endl;}
   }
-  if(nLvlTot < 2) { cerr << "err: No levels, check z file" << endl; cin.get(); }
+  if(nLvlTot < 2) { cerr << "err: No levels, check levels file" << endl; cin.get(); }
 
   for(int lvl=0; lvl<g_nDisLvlMax; lvl++) {
     string sLvlLine;
@@ -134,7 +132,7 @@ void ReadDisInputFile() {
     if(nLvl != lvl || lvl > nLvlTot) cerr << "err: File mismatch at nLvl:" << nLvl << " lvl: " << lvl << endl;
     if(int(dLvlT12) == dLvlT12 && dLvlT12<100) {
       // sometimes no halflife meas; or a halflive is very(!) long
-      cerr << "err: For level " << lvl << " Halflives not reported; set to arb value; check z file" << endl;
+      cerr << "err: For level " << lvl << " Halflives not reported; set to arb value; check levels file" << endl;
       if (lvl==0) { nLvlGam = 0; } // unstable gs
       else {nLvlGam = dLvlT12;} // nLvlGam read as half-life
       dLvlT12 = g_dLvlT12_arb_max;
