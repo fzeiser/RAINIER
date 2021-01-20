@@ -74,7 +74,7 @@ char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
 
 /////////////////////////// Settings & Parameters ///////////////////////////////
 #include "settings.h" // all (or most) parameters for the simulations
-TString g_sRAINIERPath; // Path to RAINIER
+string g_sRAINIERPath; // Path to RAINIER
 
 ///////////////////////// Discrete Input File //////////////////////////////////
 double g_adDisEne[g_nDisLvlMax]; // discrete lvl energy
@@ -96,7 +96,7 @@ void ReadDisInputFile() {
   #ifdef buse_nondefault_levels_file
   TString szFile = slevels_file; // might e.g. add missing half-life
   #else
-  TString szFile = g_sRAINIERPath + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
+  TString szFile = TString(g_sRAINIERPath) + "/levels/z" + TString::Format("%03d",g_nZ) + ".dat";
   #endif // buse_nondefault_levels_file
   lvlFile.open(szFile.Data());
   if (lvlFile.fail()) {cerr << "Level File: " << szFile << " could not be opened" << endl; exit(0);}
