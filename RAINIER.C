@@ -74,7 +74,7 @@ char cbriccs[] = "BrIccS.exe"; // haven't done any windows testing yet
 
 /////////////////////////// Settings & Parameters ///////////////////////////////
 #include "settings.h" // all (or most) parameters for the simulations
-string g_sRAINIERPath; // Path to RAINIER
+TString g_sRAINIERPath; // Path to RAINIER
 
 ///////////////////////// Discrete Input File //////////////////////////////////
 double g_adDisEne[g_nDisLvlMax]; // discrete lvl energy
